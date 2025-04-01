@@ -32,10 +32,8 @@ func (this *Server) listenMessage() {
 		msg := <-this.Message
 
 		this.mapLock.Lock()
-
-		// send all
-		for _, client := range this.OnlineMap {
-			client.C <- msg
+		for _, cli := range this.OnlineMap {
+			cli.C <- msg
 		}
 
 		this.mapLock.Unlock()
@@ -50,14 +48,10 @@ func (this *Server) broadCast(user *User, msg string) {
 func (this *Server) handler(conn net.Conn) {
 	//fmt.Println("connect success!")
 
-	// lock
-	this.mapLock.Lock()
-
 	// online map
 	user := NewUser(conn)
+	this.mapLock.Lock()
 	this.OnlineMap[user.Name] = user
-
-	// unlock
 	this.mapLock.Unlock()
 
 	// broad cast
@@ -68,22 +62,24 @@ func (this *Server) handler(conn net.Conn) {
 }
 
 func (this *Server) Start() {
-
-	// listen
+	// socket listen
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", this.Ip, this.Port))
 	if err != nil {
 		fmt.Println("net.Listen err:", err)
 		return
 	}
 
-	// listen
+	// close listen socket
+	defer listener.Close()
+
+	// listen socket
 	go this.listenMessage()
 
 	for {
 		// accept
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("listener.Accept err:", err)
+			fmt.Println("listener accept err:", err)
 			continue
 		}
 
@@ -91,6 +87,4 @@ func (this *Server) Start() {
 		go this.handler(conn)
 	}
 
-	// close listen socket
-	listener.Close()
 }
