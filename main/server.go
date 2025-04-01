@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"sync"
 )
@@ -32,30 +33,40 @@ func (this *Server) listenMessage() {
 		msg := <-this.Message
 
 		this.mapLock.Lock()
-		for _, cli := range this.OnlineMap {
-			cli.C <- msg
+		for _, user := range this.OnlineMap {
+			user.C <- msg
 		}
-
 		this.mapLock.Unlock()
 	}
 }
 
 func (this *Server) broadCast(user *User, msg string) {
-	sendMsg := "[" + user.Addr + "]" + user.Name + ":" + msg
-	this.Message <- sendMsg
+	this.Message <- "[" + user.Addr + "]" + user.Name + ":" + msg
 }
 
 func (this *Server) handler(conn net.Conn) {
-	//fmt.Println("connect success!")
 
-	// online map
-	user := NewUser(conn)
-	this.mapLock.Lock()
-	this.OnlineMap[user.Name] = user
-	this.mapLock.Unlock()
+	user := NewUser(conn, this)
 
-	// broad cast
-	this.broadCast(user, "is online!")
+	// online
+	user.Online()
+
+	// receive msg
+	go func() {
+		for {
+			buf := make([]byte, 4096)
+			n, err := conn.Read(buf)
+			if n == 0 {
+				user.Offline()
+				return
+			}
+			if err != nil && err != io.EOF {
+				fmt.Println("conn read err:", err)
+				return
+			}
+			user.DoMessage(string(buf[:n-1]))
+		}
+	}()
 
 	// clog
 	select {}
