@@ -80,6 +80,17 @@ func (this *User) DoMessage(msg string) {
 
 		this.Name = newName
 		this.SendMessage("rename -> " + this.Name + " success!\n")
+	} else if len(msg) > 4 && msg[:3] == "to@" {
+		nameAndSend := strings.Split(msg, "@")[1]
+		if !strings.Contains(nameAndSend, " ") || strings.Split(nameAndSend, " ")[0] == "" {
+			this.SendMessage("private msg err!\n")
+			return
+		}
+		remoteUser, ok := this.server.OnlineMap[strings.Split(nameAndSend, " ")[0]]
+		if !ok {
+			this.SendMessage("user not exist!")
+		}
+		remoteUser.SendMessage(this.Name + "[private]:" + strings.Split(nameAndSend, " ")[1] + "\n")
 	} else {
 		// broad cast
 		this.server.broadCast(this, msg)
