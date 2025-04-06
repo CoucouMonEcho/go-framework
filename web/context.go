@@ -21,6 +21,20 @@ type Context struct {
 	MatchedRoute string
 	pathParams   map[string]string
 	queryParams  url.Values
+
+	templateEngine TemplateEngine
+}
+
+func (ctx *Context) Render(templateName string, data any) error {
+	var err error
+	ctx.RespData, err = ctx.templateEngine.Render(ctx.Req.Context(), templateName, data)
+	if err != nil {
+		ctx.RespCode = http.StatusInternalServerError
+		return err
+	}
+	// no need other status
+	ctx.RespCode = http.StatusOK
+	return nil
 }
 
 func (c *Context) SetCookie(ck *http.Cookie) {
@@ -50,49 +64,49 @@ func (c *Context) BindJSON(val any) error {
 	return decoder.Decode(val)
 }
 
-func (c *Context) FormValue(key string) StringValue {
+func (c *Context) FormValue(key string) *StringValue {
 	// form has cache
 	err := c.Req.ParseForm()
 	if err != nil {
-		return StringValue{
+		return &StringValue{
 			err: err,
 		}
 	}
 	vals, ok := c.Req.Form[key]
 	if !ok {
-		return StringValue{
+		return &StringValue{
 			err: errors.New("web: key not found"),
 		}
 	}
-	return StringValue{
+	return &StringValue{
 		val: vals[0],
 	}
 }
 
-func (c *Context) QueryValue(key string) StringValue {
+func (c *Context) QueryValue(key string) *StringValue {
 	// query has no cache
 	if c.queryParams == nil {
 		c.queryParams = c.Req.URL.Query()
 	}
 	vals, ok := c.queryParams[key]
 	if !ok || len(vals) == 0 {
-		return StringValue{
+		return &StringValue{
 			err: errors.New("web: key not found"),
 		}
 	}
-	return StringValue{
+	return &StringValue{
 		val: vals[0],
 	}
 }
 
-func (c *Context) PathValue(key string) StringValue {
+func (c *Context) PathValue(key string) *StringValue {
 	val, ok := c.pathParams[key]
 	if !ok {
-		return StringValue{
+		return &StringValue{
 			err: errors.New("web: key not found"),
 		}
 	}
-	return StringValue{
+	return &StringValue{
 		val: val,
 	}
 }
@@ -100,6 +114,13 @@ func (c *Context) PathValue(key string) StringValue {
 type StringValue struct {
 	val string
 	err error
+}
+
+func (sv *StringValue) String() (string, error) {
+	if sv.err != nil {
+		return "", sv.err
+	}
+	return sv.val, nil
 }
 
 func (sv *StringValue) AsInt64() (int64, error) {

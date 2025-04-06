@@ -21,8 +21,9 @@ var _ Server = &HTTPServer{}
 
 type HTTPServer struct {
 	router
-	middlewares []Middleware
-	logger      func(msg string, args ...any)
+	middlewares    []Middleware
+	logger         func(msg string, args ...any)
+	templateEngine TemplateEngine
 }
 
 func NewHTTPServer(opts ...HTTPServerOption) *HTTPServer {
@@ -50,15 +51,26 @@ func ServerWithLogger(logger func(msg string, args ...any)) HTTPServerOption {
 	}
 }
 
+func ServerWithTemplateEngine(templateEngine TemplateEngine) HTTPServerOption {
+	return func(server *HTTPServer) {
+		server.templateEngine = templateEngine
+	}
+}
+
 func (h *HTTPServer) Get(path string, handlerFunc HandlerFunc) {
 	h.router.addRoute(http.MethodGet, path, handlerFunc)
+}
+
+func (h *HTTPServer) Post(path string, handlerFunc HandlerFunc) {
+	h.router.addRoute(http.MethodPost, path, handlerFunc)
 }
 
 // ServeHTTP deal request
 func (h *HTTPServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	ctx := &Context{
-		Req:  req,
-		Resp: resp,
+		Req:            req,
+		Resp:           resp,
+		templateEngine: h.templateEngine,
 	}
 	root := h.serve
 	for i := len(h.middlewares) - 1; i >= 0; i-- {
