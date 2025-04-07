@@ -57,6 +57,10 @@ func ServerWithTemplateEngine(templateEngine TemplateEngine) HTTPServerOption {
 	}
 }
 
+func (h *HTTPServer) Use(method string, path string, middlewares ...Middleware) {
+	h.router.addMiddlewares(method, path, middlewares...)
+}
+
 func (h *HTTPServer) Get(path string, handlerFunc HandlerFunc) {
 	h.router.addRoute(http.MethodGet, path, handlerFunc)
 }
@@ -104,8 +108,13 @@ func (h *HTTPServer) serve(ctx *Context) {
 		return
 	}
 	ctx.pathParams = info.pathParams
-	ctx.MatchedRoute = info.n.route
-	info.n.handler(ctx)
+	ctx.MatchedRoute = info.node.route
+	var handler HandlerFunc
+	for i := len(info.node.middlewares); i >= 0; i-- {
+		//TODO priority ?
+		handler = info.node.middlewares[i](info.node.handler)
+	}
+	handler(ctx)
 	return
 }
 

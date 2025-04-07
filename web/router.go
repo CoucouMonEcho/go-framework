@@ -43,11 +43,14 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc) {
 		root.route = "/"
 		return
 	}
+	//TODO queue := []*node{root}
+	// extends from prev node
 	for _, seg := range strings.Split(path, "/")[1:] {
 		if seg == "" {
 			panic("web: path can not contains '//'")
 		}
 		child := root.childOrCreate(seg)
+		// do not edit node here
 		root = child
 	}
 	if root.handler != nil {
@@ -57,27 +60,67 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc) {
 	root.route = path
 }
 
+func (r *router) addMiddlewares(method string, path string, middlewares ...Middleware) {
+	if path == "" {
+		panic("web: empty path")
+	}
+	if path[0] != '/' {
+		panic("web: path must begin with '/'")
+	}
+	if path != "/" && path[len(path)-1] == '/' {
+		panic("web: path can not end with '/'")
+	}
+
+	root, ok := r.trees[method]
+	if !ok {
+		root = &node{
+			path: "/",
+		}
+		r.trees[method] = root
+	}
+	if path == "/" {
+		root.route = "/"
+		root.middlewares = middlewares
+		return
+	}
+	//TODO queue := []*node{root}
+	// extends from prev node
+	for _, seg := range strings.Split(path, "/")[1:] {
+		if seg == "" {
+			panic("web: path can not contains '//'")
+		}
+		child := root.childOrCreate(seg)
+		// do not edit node here
+		root = child
+	}
+	if root.handler != nil {
+		panic(fmt.Sprintf("web: path '%s' already exist", path))
+	}
+	root.middlewares = middlewares
+	root.route = path
+}
+
 func (r *router) route(method string, path string) (*matchInfo, bool) {
 	root, ok := r.trees[method]
 	if !ok {
 		return nil, false
 	}
 	mi := &matchInfo{
-		n: root,
+		node: root,
 	}
 	if path == "/" {
-		return mi, root.handler != nil
+		return mi, true
 	}
-	path = strings.Trim(path, "/")
+
 	var pathParams map[string]string
-	for _, seg := range strings.Split(path, "/") {
+	for _, seg := range strings.Split(strings.Trim(path, "/"), "/") {
 		if seg == "" {
 			panic("web: path can not contains '//'")
 		}
 		child, ok := root.childOf(seg)
 		if !ok {
 			if root.nodeType == nodeTypeWildcard {
-				return mi, true
+				break
 			}
 			return nil, false
 		}
@@ -89,16 +132,13 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 		}
 		root = child
 	}
-	return &matchInfo{
-		n:          root,
-		pathParams: pathParams,
-	}, root.handler != nil
+	mi.pathParams = pathParams
+	return mi, true
 }
 
-//TODO finish route middleware
-// use queue to Level-order traversal
-
+//
 //func (r *router) findMiddlewares(root *node, segs []string) []Middleware {
+//	// use queue to level-order traversal
 //	queue := []*node{root}
 //	res := make([]Middleware, 0, 16)
 //	for i := 0; i < len(segs); i++ {
@@ -114,11 +154,12 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 //}
 
 type node struct {
-	route    string
-	path     string
-	children []*node
-	nodeType nodeType
-	handler  HandlerFunc
+	route       string
+	path        string
+	children    []*node
+	nodeType    nodeType
+	handler     HandlerFunc
+	middlewares []Middleware
 }
 
 type nodeType int
@@ -214,6 +255,6 @@ func (n *node) childOf(path string) (*node, bool) {
 }
 
 type matchInfo struct {
-	n          *node
+	node       *node
 	pathParams map[string]string
 }

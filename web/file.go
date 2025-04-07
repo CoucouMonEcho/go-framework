@@ -17,7 +17,7 @@ type FileUploader struct {
 
 func (fu *FileUploader) Handle() HandlerFunc {
 	// return handler
-	// this could before handle do some check
+	// do some check before handle
 	if fu.FileField == "" {
 		fu.FileField = "file"
 	}
@@ -64,7 +64,7 @@ func (fu *FileUploader) Handle() HandlerFunc {
 	}
 }
 
-// option design (not use, just for code practice)
+// option design for code practice
 
 //type FileUploaderOption func(*FileUploader) *FileUploader
 //
@@ -121,7 +121,7 @@ func (fd *FileDownloader) Handle() HandlerFunc {
 		header.Set("Content-Transfer-Encoding", "binary")
 		// this header means do not use browser cache
 		header.Set("Expires", "0")
-		// this header means even browser has cached, use file should confirm again
+		// this header means even browser has cached, also need to confirm again before file used
 		header.Set("Cache-Control", "must-revalidate")
 		// this header means cache, it is for HTTP/1.0,
 		// which "public" is use cache, "no-cache" is not use
@@ -131,18 +131,3 @@ func (fd *FileDownloader) Handle() HandlerFunc {
 		http.ServeFile(ctx.Resp, ctx.Req, path)
 	}
 }
-
-// this header means save to local
-//header.Set("Content-Disposition", "attachment; filename="+fn)
-
-//header.Set("Content-Description", "File Transfer")
-
-// this header means save to local
-//header.Set("Content-Type", "application/octet-stream")
-//header.Set("Content-Transfer-Encoding", "binary")
-
-// these 2 headers means do not use browser cache
-//header.Set("Expires", "0")
-//header.Set("Cache-Control", "must-revalidate")
-
-//header.Set("Pragma", "public")

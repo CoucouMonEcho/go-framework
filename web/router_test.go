@@ -99,10 +99,10 @@ func TestRouter_getRoute(t *testing.T) {
 		info      *matchInfo
 	}{
 		{"method not exist", http.MethodOptions, "/order/detail", false, nil},
-		{"static", http.MethodGet, "/order/detail", true, &matchInfo{n: &node{path: "detail", nodeType: nodeTypeStatic, handler: mockHandler, children: []*node{&node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}}}}},
-		{"wild card", http.MethodGet, "/order/aaa", true, &matchInfo{n: &node{path: "*", nodeType: nodeTypeWildcard, handler: mockHandler, children: []*node{&node{path: ":id", nodeType: nodeTypePathParam, handler: mockHandler}}}}},
-		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{n: &node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId": "123o"}}},
-		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{n: &node{path: ":orderId2", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId2": "123o"}}},
+		{"static", http.MethodGet, "/order/detail", true, &matchInfo{node: &node{path: "detail", nodeType: nodeTypeStatic, handler: mockHandler, children: []*node{&node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}}}}},
+		{"wild card", http.MethodGet, "/order/aaa", true, &matchInfo{node: &node{path: "*", nodeType: nodeTypeWildcard, handler: mockHandler, children: []*node{&node{path: ":id", nodeType: nodeTypePathParam, handler: mockHandler}}}}},
+		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{node: &node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId": "123o"}}},
+		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{node: &node{path: ":orderId2", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId2": "123o"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestRouter_getRoute(t *testing.T) {
 			if !found {
 				return
 			}
-			msg, ok := testCase.info.n.equal(info.n)
+			msg, ok := testCase.info.node.equal(info.node)
 			assert.True(t, ok, msg)
 			assert.Equal(t, testCase.info.pathParams, info.pathParams)
 		})
