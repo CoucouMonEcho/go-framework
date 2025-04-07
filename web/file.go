@@ -1,11 +1,13 @@
 package web
 
 import (
+	lru "github.com/hashicorp/golang-lru/v2"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -102,7 +104,7 @@ func (fd *FileDownloader) Handle() HandlerFunc {
 		path, err = filepath.Abs(path)
 		if !strings.Contains(path, fd.Dir) {
 			ctx.RespCode = http.StatusBadRequest
-			ctx.RespData = []byte(err.Error())
+			ctx.RespData = []byte("illegal path used")
 			return
 		}
 		fn := filepath.Base(path)
@@ -130,4 +132,94 @@ func (fd *FileDownloader) Handle() HandlerFunc {
 		// no cache
 		http.ServeFile(ctx.Resp, ctx.Req, path)
 	}
+}
+
+type StaticResourceHandler struct {
+	dir                     string
+	pathPrefix              string
+	cache                   *lru.Cache[string, []byte]
+	extensionContentTypeMap map[string]string
+	maxSize                 int
+}
+
+type StaticResourceHandlerOption func(sh *StaticResourceHandler)
+
+func NewStaticResourceHandler(dir string, pathPrefix string, opts ...StaticResourceHandlerOption) (*StaticResourceHandler, error) {
+	// key-value count <= 1000
+	c, err := lru.New[string, []byte](1000)
+	if err != nil {
+		return nil, err
+	}
+	res := &StaticResourceHandler{
+		dir:        dir,
+		pathPrefix: pathPrefix,
+		cache:      c,
+		extensionContentTypeMap: map[string]string{
+			"jpeg": "image/jpeg",
+			"jpe":  "image/jpeg",
+			"jpg":  "image/jpeg",
+			"png":  "image/png",
+			"pdf":  "image/pdf",
+		},
+		maxSize: 1024 * 1024 * 10,
+	}
+	for _, opt := range opts {
+		opt(res)
+	}
+	return res, nil
+}
+
+func StaticResourceHandlerWithMaxSize(maxSize int) StaticResourceHandlerOption {
+	return func(sh *StaticResourceHandler) {
+		sh.maxSize = maxSize
+	}
+}
+
+func StaticResourceHandlerWithCache(c *lru.Cache[string, []byte]) StaticResourceHandlerOption {
+	return func(sh *StaticResourceHandler) {
+		sh.cache = c
+	}
+}
+
+func StaticResourceHandlerWithMoreExtension(extMap map[string]string) StaticResourceHandlerOption {
+	return func(sh *StaticResourceHandler) {
+		for ext, contentType := range extMap {
+			sh.extensionContentTypeMap[ext] = contentType
+		}
+	}
+}
+
+func (sh *StaticResourceHandler) Handle(ctx *Context) {
+	req, err := ctx.PathValue("file").String()
+	if err != nil {
+		ctx.RespCode = http.StatusBadRequest
+		ctx.RespData = []byte(err.Error())
+		return
+	}
+	path := filepath.Join(sh.dir, sh.pathPrefix, filepath.Clean(req))
+	path, err = filepath.Abs(path)
+	if !strings.Contains(path, sh.dir) {
+		ctx.RespCode = http.StatusBadRequest
+		ctx.RespData = []byte("illegal path used")
+		return
+	}
+	var data []byte
+	var ok bool
+	if data, ok = sh.cache.Get(path); !ok {
+		data, err = os.ReadFile(path)
+		if err != nil {
+			ctx.RespCode = http.StatusInternalServerError
+			ctx.RespData = []byte(err.Error())
+			return
+		}
+		if len(data) <= sh.maxSize {
+			sh.cache.Add(path, data)
+		}
+	}
+	header := ctx.Resp.Header()
+	header.Set("Content-Type", sh.extensionContentTypeMap[filepath.Ext(path)[1:]])
+	header.Set("Content-Length", strconv.Itoa(len(data)))
+	ctx.RespCode = http.StatusOK
+	ctx.RespData = data
+	return
 }

@@ -117,10 +117,10 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 		if seg == "" {
 			panic("web: path can not contains '//'")
 		}
-		child, ok := root.childOf(seg)
+		child, ok := mi.node.childOf(seg)
 		if !ok {
-			if root.nodeType == nodeTypeWildcard {
-				break
+			if mi.node.nodeType == nodeTypeWildcard {
+				return mi, true
 			}
 			return nil, false
 		}
@@ -130,7 +130,7 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 			}
 			pathParams[child.path[1:]] = seg
 		}
-		root = child
+		mi.node = child
 	}
 	mi.pathParams = pathParams
 	return mi, true

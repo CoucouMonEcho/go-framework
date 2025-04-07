@@ -109,10 +109,14 @@ func (h *HTTPServer) serve(ctx *Context) {
 	}
 	ctx.pathParams = info.pathParams
 	ctx.MatchedRoute = info.node.route
-	var handler HandlerFunc
-	for i := len(info.node.middlewares); i >= 0; i-- {
-		//TODO priority ?
-		handler = info.node.middlewares[i](info.node.handler)
+
+	middlewares := info.node.middlewares
+	handler := info.node.handler
+	if middlewares != nil {
+		for i := len(middlewares); i >= 0; i-- {
+			//TODO priority ?
+			handler = middlewares[i](handler)
+		}
 	}
 	handler(ctx)
 	return
