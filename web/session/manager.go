@@ -11,9 +11,20 @@ import (
 type Manager struct {
 	Propagator
 	Store
+	CtxSessKey string
 }
 
 func (m *Manager) GetSession(ctx *web.Context) (Session, error) {
+	// get from cache
+	if ctx.UserValues == nil {
+		ctx.UserValues = make(map[string]any)
+	}
+	val, ok := ctx.UserValues[m.CtxSessKey]
+	// val := ctx.Req.Context().Value(m.CtxSessKey)
+	if ok {
+		return val.(Session), nil
+	}
+	// extract session
 	sid, err := m.Extract(ctx.Req)
 	if err != nil {
 		return nil, err
@@ -22,16 +33,20 @@ func (m *Manager) GetSession(ctx *web.Context) (Session, error) {
 	if err != nil {
 		return nil, err
 	}
+	// add cache
+	ctx.UserValues[m.CtxSessKey] = sess
+	// ctx.Req = ctx.Req.WithContext(context.WithValue(ctx.Req.Context(), m.CtxSessKey, sess))
 	return sess, err
 }
 
 func (m *Manager) InitSession(ctx *web.Context) (Session, error) {
-	sess, err := m.Generate(ctx.Req.Context(), uuid.New().String())
+	id := uuid.New().String()
+	sess, err := m.Generate(ctx.Req.Context(), id)
 	if err != nil {
 		return nil, err
 	}
 	// inject http response cookie
-	err = m.Inject("id", ctx.Resp)
+	err = m.Inject(id, ctx.Resp)
 	if err != nil {
 		return nil, err
 	}

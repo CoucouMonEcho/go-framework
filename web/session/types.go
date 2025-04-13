@@ -8,6 +8,11 @@ import (
 	"net/http"
 )
 
+//var (
+//	// errKeyNotFound sentinel error
+//	errKeyNotFound = errors.New("key not found")
+//)
+
 type Store interface {
 	// Generate id and timeout need or not
 	Generate(ctx context.Context, id string) (Session, error)

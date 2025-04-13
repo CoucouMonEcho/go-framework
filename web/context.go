@@ -23,6 +23,8 @@ type Context struct {
 	queryParams  url.Values
 
 	templateEngine TemplateEngine
+	// need init by user
+	UserValues map[string]any
 }
 
 func (ctx *Context) Render(templateName string, data any) error {
