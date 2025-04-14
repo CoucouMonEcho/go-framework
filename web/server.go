@@ -12,7 +12,7 @@ type Server interface {
 	http.Handler
 	Start(addr string) error
 
-	addRoute(method string, path string, handlerFunc HandlerFunc)
+	addRoute(method string, path string, handlerFunc HandlerFunc, middlewares ...Middleware)
 }
 
 type HTTPServerOption func(server *HTTPServer)
@@ -58,7 +58,7 @@ func ServerWithTemplateEngine(templateEngine TemplateEngine) HTTPServerOption {
 }
 
 func (h *HTTPServer) Use(method string, path string, middlewares ...Middleware) {
-	h.router.addMiddlewares(method, path, middlewares...)
+	h.router.addRoute(http.MethodGet, path, nil, middlewares...)
 }
 
 func (h *HTTPServer) Get(path string, handlerFunc HandlerFunc) {
@@ -110,11 +110,13 @@ func (h *HTTPServer) serve(ctx *Context) {
 	ctx.pathParams = info.pathParams
 	ctx.MatchedRoute = info.node.route
 
-	middlewares := info.node.middlewares
+	middlewares := info.middlewares
 	handler := info.node.handler
 	if middlewares != nil {
 		for i := len(middlewares); i >= 0; i-- {
-			//TODO priority ?
+			if middlewares[i] == nil {
+				continue
+			}
 			handler = middlewares[i](handler)
 		}
 	}
