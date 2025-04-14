@@ -17,7 +17,7 @@ func newRouter() router {
 	}
 }
 
-func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc) {
+func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc, middlewares ...Middleware) {
 	if path == "" {
 		panic("web: empty path")
 	}
@@ -41,10 +41,9 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc) {
 		}
 		root.handler = handlerFunc
 		root.route = "/"
+		root.middlewares = middlewares
 		return
 	}
-	//TODO queue := []*node{root}
-	// extends from prev node
 	for _, seg := range strings.Split(path, "/")[1:] {
 		if seg == "" {
 			panic("web: path can not contains '//'")
@@ -58,46 +57,7 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc) {
 	}
 	root.handler = handlerFunc
 	root.route = path
-}
-
-func (r *router) addMiddlewares(method string, path string, middlewares ...Middleware) {
-	if path == "" {
-		panic("web: empty path")
-	}
-	if path[0] != '/' {
-		panic("web: path must begin with '/'")
-	}
-	if path != "/" && path[len(path)-1] == '/' {
-		panic("web: path can not end with '/'")
-	}
-
-	root, ok := r.trees[method]
-	if !ok {
-		root = &node{
-			path: "/",
-		}
-		r.trees[method] = root
-	}
-	if path == "/" {
-		root.route = "/"
-		root.middlewares = middlewares
-		return
-	}
-	//TODO queue := []*node{root}
-	// extends from prev node
-	for _, seg := range strings.Split(path, "/")[1:] {
-		if seg == "" {
-			panic("web: path can not contains '//'")
-		}
-		child := root.childOrCreate(seg)
-		// do not edit node here
-		root = child
-	}
-	if root.handler != nil {
-		panic(fmt.Sprintf("web: path '%s' already exist", path))
-	}
 	root.middlewares = middlewares
-	root.route = path
 }
 
 func (r *router) route(method string, path string) (*matchInfo, bool) {
@@ -109,18 +69,19 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 		node: root,
 	}
 	if path == "/" {
-		return mi, true
+		return mi, mi.node.handler != nil
 	}
 
 	var pathParams map[string]string
-	for _, seg := range strings.Split(strings.Trim(path, "/"), "/") {
+	segs := strings.Split(strings.Trim(path, "/"), "/")
+	for _, seg := range segs {
 		if seg == "" {
 			panic("web: path can not contains '//'")
 		}
 		child, ok := mi.node.childOf(seg)
 		if !ok {
 			if mi.node.nodeType == nodeTypeWildcard {
-				return mi, true
+				return mi, mi.node.handler != nil
 			}
 			return nil, false
 		}
@@ -133,25 +94,38 @@ func (r *router) route(method string, path string) (*matchInfo, bool) {
 		mi.node = child
 	}
 	mi.pathParams = pathParams
-	return mi, true
+	mi.middlewares = findMiddlewares(root, segs)
+	return mi, mi.node.handler != nil
 }
 
-//
-//func (r *router) findMiddlewares(root *node, segs []string) []Middleware {
-//	// use queue to level-order traversal
-//	queue := []*node{root}
-//	res := make([]Middleware, 0, 16)
-//	for i := 0; i < len(segs); i++ {
-//		seg := segs[i]
-//		var children []*node
-//		for _, child := range queue {
-//			if len(child.children) > 0 {
-//				res = append(res, child.middlewares...)
-//			}
-//			children = append(children, child.children...)
-//		}
-//	}
-//}
+func findMiddlewares(root *node, segs []string) []Middleware {
+	// use queue to level-order traversal
+	queue := []*node{root}
+	res := make([]Middleware, 0, 16)
+	for i := 0; i < len(segs); i++ {
+		seg := segs[i]
+		var children []*node
+		for _, cur := range queue {
+			if len(cur.children) > 0 {
+				res = append(res, cur.middlewares...)
+			}
+			curChildren := []*node{}
+			for _, curChild := range cur.children {
+				if curChild.path == seg || curChild.nodeType != nodeTypeStatic {
+					curChildren = append(children, curChild)
+				}
+			}
+			children = append(children, curChildren...)
+		}
+		queue = children
+	}
+	for _, cur := range queue {
+		if len(cur.children) > 0 {
+			res = append(res, cur.middlewares...)
+		}
+	}
+	return res
+}
 
 type node struct {
 	route       string
@@ -255,6 +229,7 @@ func (n *node) childOf(path string) (*node, bool) {
 }
 
 type matchInfo struct {
-	node       *node
-	pathParams map[string]string
+	node        *node
+	pathParams  map[string]string
+	middlewares []Middleware
 }
