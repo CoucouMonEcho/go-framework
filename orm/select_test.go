@@ -46,6 +46,45 @@ func TestSelector_Build(t *testing.T) {
 				Args: nil,
 			},
 		},
+		{
+			name:    "where",
+			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18)),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `TestModel` WHERE `age` = ?;",
+				Args: []any{18},
+			},
+		},
+		{
+			name:    "not",
+			builder: (&Selector[TestModel]{}).Where(Not(C("age").Eq(18))),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `TestModel` WHERE NOT (`age` = ?);",
+				Args: []any{18},
+			},
+		},
+		{
+			name:    "and",
+			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18).And(C("name").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `TestModel` WHERE (`age` = ?) AND (`name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "or",
+			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18).Or(C("name").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `TestModel` WHERE (`age` = ?) OR (`name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "empty where",
+			builder: (&Selector[TestModel]{}).Where(),
+			wantQuery: &Query{
+				SQL: "SELECT * FROM `TestModel`;",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
