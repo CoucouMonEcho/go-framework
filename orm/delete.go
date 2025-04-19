@@ -2,16 +2,22 @@ package orm
 
 type Deleter[T any] struct {
 	builder
-
 	table string
-	model *model
+
+	db *DB
 
 	where []Predicate
 }
 
+func NewDeleter[T any](db *DB) *Deleter[T] {
+	return &Deleter[T]{
+		db: db,
+	}
+}
+
 func (d *Deleter[T]) Build() (*Query, error) {
 	var err error
-	d.model, err = parseModel(new(T))
+	d.model, err = d.db.r.parseModel(new(T))
 	if err != nil {
 		return nil, err
 	}

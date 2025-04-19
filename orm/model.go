@@ -16,7 +16,31 @@ type field struct {
 	colName string
 }
 
-func parseModel(entity any) (*model, error) {
+type registry struct {
+	models map[reflect.Type]*model
+}
+
+func newRegistry() *registry {
+	return &registry{
+		models: make(map[reflect.Type]*model, 64),
+	}
+}
+
+func (r *registry) get(entity any) (*model, error) {
+	entityType := reflect.TypeOf(entity)
+	m, ok := r.models[entityType]
+	if !ok {
+		var err error
+		m, err = r.parseModel(entity)
+		if err != nil {
+			return nil, err
+		}
+		r.models[entityType] = m
+	}
+	return m, nil
+}
+
+func (r *registry) parseModel(entity any) (*model, error) {
 	entityType := reflect.TypeOf(entity)
 	if entityType.Kind() != reflect.Ptr || entityType.Elem().Kind() != reflect.Struct {
 		return nil, errs.ErrModelNotPointer

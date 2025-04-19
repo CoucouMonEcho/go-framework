@@ -16,7 +16,7 @@ func TestSelector_Build(t *testing.T) {
 	}{
 		{
 			name:    "no from",
-			builder: &Selector[TestModel]{},
+			builder: NewSelector[TestModel](MustNewDB()),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
@@ -24,7 +24,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "from",
-			builder: (&Selector[TestModel]{}).From("test_model"),
+			builder: (NewSelector[TestModel](MustNewDB())).From("test_model"),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM test_model;",
 				Args: nil,
@@ -32,7 +32,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "empty from",
-			builder: (&Selector[TestModel]{}).From(""),
+			builder: (NewSelector[TestModel](MustNewDB())).From(""),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
@@ -40,7 +40,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "db from",
-			builder: (&Selector[TestModel]{}).From("`test_db`.`test_model`"),
+			builder: (NewSelector[TestModel](MustNewDB())).From("`test_db`.`test_model`"),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_db`.`test_model`;",
 				Args: nil,
@@ -48,7 +48,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "where",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18)),
+			builder: (NewSelector[TestModel](MustNewDB())).Where(C("Age").Eq(18)),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model` WHERE `age` = ?;",
 				Args: []any{18},
@@ -56,7 +56,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "not",
-			builder: (&Selector[TestModel]{}).Where(Not(C("Age").Eq(18))),
+			builder: (NewSelector[TestModel](MustNewDB())).Where(Not(C("Age").Eq(18))),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model` WHERE NOT (`age` = ?);",
 				Args: []any{18},
@@ -64,7 +64,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "and",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			builder: (NewSelector[TestModel](MustNewDB())).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "user1"},
@@ -72,7 +72,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "or",
-			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))),
+			builder: (NewSelector[TestModel](MustNewDB())).Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
 				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?);",
 				Args: []any{18, "user1"},
@@ -80,7 +80,7 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "empty where",
-			builder: (&Selector[TestModel]{}).Where(),
+			builder: (NewSelector[TestModel](MustNewDB())).Where(),
 			wantQuery: &Query{
 				SQL: "SELECT * FROM `test_model`;",
 			},

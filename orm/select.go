@@ -8,12 +8,20 @@ type Selector[T any] struct {
 	builder
 	table string
 
+	db *DB
+
 	where []Predicate
+}
+
+func NewSelector[T any](db *DB) *Selector[T] {
+	return &Selector[T]{
+		db: db,
+	}
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
 	var err error
-	s.model, err = parseModel(new(T))
+	s.model, err = s.db.r.parseModel(new(T))
 	if err != nil {
 		return nil, err
 	}
