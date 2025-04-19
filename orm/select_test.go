@@ -18,7 +18,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "no from",
 			builder: &Selector[TestModel]{},
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
+				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
 			},
 		},
@@ -34,7 +34,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "empty from",
 			builder: (&Selector[TestModel]{}).From(""),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel`;",
+				SQL:  "SELECT * FROM `test_model`;",
 				Args: nil,
 			},
 		},
@@ -48,33 +48,33 @@ func TestSelector_Build(t *testing.T) {
 		},
 		{
 			name:    "where",
-			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18)),
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18)),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE `age` = ?;",
+				SQL:  "SELECT * FROM `test_model` WHERE `age` = ?;",
 				Args: []any{18},
 			},
 		},
 		{
 			name:    "not",
-			builder: (&Selector[TestModel]{}).Where(Not(C("age").Eq(18))),
+			builder: (&Selector[TestModel]{}).Where(Not(C("Age").Eq(18))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE NOT (`age` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE NOT (`age` = ?);",
 				Args: []any{18},
 			},
 		},
 		{
 			name:    "and",
-			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18).And(C("name").Eq("user1"))),
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`age` = ?) AND (`name` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "user1"},
 			},
 		},
 		{
 			name:    "or",
-			builder: (&Selector[TestModel]{}).Where(C("age").Eq(18).Or(C("name").Eq("user1"))),
+			builder: (&Selector[TestModel]{}).Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
-				SQL:  "SELECT * FROM `TestModel` WHERE (`age` = ?) OR (`name` = ?);",
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?);",
 				Args: []any{18, "user1"},
 			},
 		},
@@ -82,7 +82,7 @@ func TestSelector_Build(t *testing.T) {
 			name:    "empty where",
 			builder: (&Selector[TestModel]{}).Where(),
 			wantQuery: &Query{
-				SQL: "SELECT * FROM `TestModel`;",
+				SQL: "SELECT * FROM `test_model`;",
 			},
 		},
 	}
