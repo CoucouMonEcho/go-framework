@@ -6,11 +6,17 @@ import (
 )
 
 var (
-	ErrModelNotPointer = errors.New("orm: pointer only")
+	ErrModelNotPointer   = errors.New("orm: pointer only")
+	ErrNoRows            = errors.New("orm: no rows")
+	ErrTooManyColumns    = errors.New("orm: too many columns")
+	ErrIllegalTableName  = errors.New("orm: illegal table name")
+	ErrIllegalColumnName = errors.New("orm: illegal column name")
 
 	// @NewErrUnsupportedExpression, use AST generate error documentation
 	errUnsupportedExpression = errors.New("orm: unsupported expression expr")
 	errUnknownField          = errors.New("orm: unknown field")
+	errUnknownColumn         = errors.New("orm: unknown column")
+	errInvalidTagContent     = errors.New("orm: invalid tag content")
 )
 
 func NewErrUnsupportedExpression(expr any) error {
@@ -19,4 +25,12 @@ func NewErrUnsupportedExpression(expr any) error {
 
 func NewErrUnknownField(field string) error {
 	return fmt.Errorf("%w: %s", errUnknownField, field)
+}
+
+func NewErrUnknownColumn(column string) error {
+	return fmt.Errorf("%w: %s", errUnknownColumn, column)
+}
+
+func NewErrInvalidTagContent(pair string) error {
+	return fmt.Errorf("%w: %s", errInvalidTagContent, pair)
 }

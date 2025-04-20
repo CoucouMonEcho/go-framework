@@ -8,7 +8,7 @@ import (
 type builder struct {
 	sb    strings.Builder
 	args  []any
-	model *model
+	model *Model
 }
 
 func (b *builder) buildPredicates(ps []Predicate) error {
@@ -52,7 +52,7 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 	case Column:
-		fd, ok := b.model.fields[exprTrans.name]
+		fd, ok := b.model.fieldMap[exprTrans.name]
 		if !ok {
 			return errs.NewErrUnknownField(exprTrans.name)
 		}

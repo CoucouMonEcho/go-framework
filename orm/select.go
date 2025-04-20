@@ -1,7 +1,10 @@
 package orm
 
 import (
+	"code-practise/orm/internal/errs"
 	"context"
+	"database/sql"
+	"reflect"
 )
 
 type Selector[T any] struct {
@@ -21,7 +24,7 @@ func NewSelector[T any](db *DB) *Selector[T] {
 
 func (s *Selector[T]) Build() (*Query, error) {
 	var err error
-	s.model, err = s.db.r.parseModel(new(T))
+	s.model, err = s.db.r.Register(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +80,93 @@ func (s *Selector[T]) From(table string) *Selector[T] {
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
-	//TODO implement me
-	panic("implement me")
+	query, err := s.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	db := s.db.db
+	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	if !rows.Next() {
+		return nil, ErrNoRows
+	}
+
+	tp, err := s.doGet(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return tp, nil
 }
 
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
-	//TODO implement me
-	panic("implement me")
+	query, err := s.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	db := s.db.db
+	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	tps := make([]*T, 16)
+
+	for rows.Next() {
+		tp, err := s.doGet(rows)
+		if err != nil {
+			return nil, err
+		}
+		tps = append(tps, tp)
+	}
+	return tps, nil
+}
+
+func (s *Selector[T]) doGet(rows *sql.Rows) (*T, error) {
+	tp := new(T)
+	meta, err := s.db.r.Get(tp)
+	if err != nil {
+		return nil, err
+	}
+	// select column
+	cs, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	if len(cs) > len(meta.fieldMap) {
+		return nil, errs.ErrTooManyColumns
+	}
+	// scan
+	vals := make([]any, 0, len(cs))
+	valElems := make([]reflect.Value, 0, len(cs))
+	for _, c := range cs {
+		fd, ok := s.model.columnMap[c]
+		if !ok {
+			return nil, errs.NewErrUnknownColumn(c)
+		}
+		// return pointer
+		val := reflect.New(fd.typ)
+
+		vals = append(vals, val.Interface())
+		valElems = append(valElems, val.Elem())
+	}
+	err = rows.Scan(vals...)
+	if err != nil {
+		return nil, err
+	}
+	// struct
+	tpValue := reflect.ValueOf(tp)
+	for i, c := range cs {
+		fd, ok := s.model.columnMap[c]
+		if !ok {
+			return nil, errs.NewErrUnknownColumn(c)
+		}
+		tpValue.Elem().FieldByName(fd.goName).Set(valElems[i])
+	}
+	return tp, nil
 }

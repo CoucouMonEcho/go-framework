@@ -17,7 +17,7 @@ func NewDeleter[T any](db *DB) *Deleter[T] {
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	var err error
-	d.model, err = d.db.r.parseModel(new(T))
+	d.model, err = d.db.r.Register(new(T))
 	if err != nil {
 		return nil, err
 	}
