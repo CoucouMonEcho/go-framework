@@ -2,13 +2,14 @@ package orm
 
 import (
 	"code-practise/orm/internal/errs"
+	model2 "code-practise/orm/model"
 	"strings"
 )
 
 type builder struct {
 	sb    strings.Builder
 	args  []any
-	model *Model
+	model *model2.Model
 }
 
 func (b *builder) buildPredicates(ps []Predicate) error {
@@ -52,12 +53,12 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 	case Column:
-		fd, ok := b.model.fieldMap[exprTrans.name]
+		fd, ok := b.model.FieldMap[exprTrans.name]
 		if !ok {
 			return errs.NewErrUnknownField(exprTrans.name)
 		}
 		b.sb.WriteByte('`')
-		b.sb.WriteString(fd.colName)
+		b.sb.WriteString(fd.ColName)
 		b.sb.WriteByte('`')
 	case value:
 		b.args = append(b.args, exprTrans.val)

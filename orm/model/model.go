@@ -1,4 +1,4 @@
-package orm
+package model
 
 import (
 	"code-practise/orm/internal/errs"
@@ -23,9 +23,9 @@ type Registry interface {
 }
 
 type Model struct {
-	tableName string
-	fieldMap  map[string]*Field
-	columnMap map[string]*Field
+	TableName string
+	FieldMap  map[string]*Field
+	ColumnMap map[string]*Field
 }
 
 type ModelOption func(*Model) error
@@ -35,31 +35,32 @@ func ModelWithTableName(tableName string) ModelOption {
 		if tableName == "" {
 			return errs.ErrIllegalTableName
 		}
-		m.tableName = tableName
+		m.TableName = tableName
 		return nil
 	}
 }
 
 func ModelWithColumnName(field string, colName string) ModelOption {
 	return func(m *Model) error {
-		fd, ok := m.fieldMap[field]
+		fd, ok := m.FieldMap[field]
 		if !ok {
 			return errs.NewErrUnknownField(field)
 		}
 		if colName == "" {
 			return errs.ErrIllegalColumnName
 		}
-		delete(m.columnMap, fd.colName)
-		fd.colName = colName
-		m.columnMap[colName] = fd
+		delete(m.ColumnMap, fd.ColName)
+		fd.ColName = colName
+		m.ColumnMap[colName] = fd
 		return nil
 	}
 }
 
 type Field struct {
-	goName  string
-	colName string
-	typ     reflect.Type
+	GoName  string
+	ColName string
+	Type    reflect.Type
+	Offset  uintptr
 }
 
 type registry struct {
@@ -69,7 +70,7 @@ type registry struct {
 	models sync.Map
 }
 
-func newRegistry() *registry {
+func NewRegistry() Registry {
 	return &registry{}
 }
 
@@ -125,7 +126,7 @@ func (r *registry) Register(entity any, opts ...ModelOption) (*Model, error) {
 	numField := entityType.NumField()
 	fieldMap := make(map[string]*Field, numField)
 	columnMap := make(map[string]*Field, numField)
-	for i := range numField {
+	for i := 0; i < numField; i++ {
 		fd := entityType.Field(i)
 		pairs, err := r.parseTag(fd.Tag)
 		if err != nil {
@@ -136,9 +137,10 @@ func (r *registry) Register(entity any, opts ...ModelOption) (*Model, error) {
 			colName = toUnderscore(fd.Name)
 		}
 		fdMeta := &Field{
-			goName:  fd.Name,
-			colName: colName,
-			typ:     fd.Type,
+			GoName:  fd.Name,
+			ColName: colName,
+			Type:    fd.Type,
+			Offset:  fd.Offset,
 		}
 		fieldMap[fd.Name] = fdMeta
 		columnMap[colName] = fdMeta
@@ -153,9 +155,9 @@ func (r *registry) Register(entity any, opts ...ModelOption) (*Model, error) {
 	}
 
 	res := &Model{
-		tableName: tableName,
-		fieldMap:  fieldMap,
-		columnMap: columnMap,
+		TableName: tableName,
+		FieldMap:  fieldMap,
+		ColumnMap: columnMap,
 	}
 
 	for _, opt := range opts {

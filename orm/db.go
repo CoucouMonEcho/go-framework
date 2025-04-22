@@ -1,11 +1,16 @@
 package orm
 
-import "database/sql"
+import (
+	"code-practise/orm/internal/accessor"
+	"code-practise/orm/model"
+	"database/sql"
+)
 
 // DB is decorator of sql.DB
 type DB struct {
-	r  *registry
-	db *sql.DB
+	r       model.Registry
+	db      *sql.DB
+	creator accessor.Creator
 }
 
 type DBOption func(db *DB)
@@ -20,13 +25,20 @@ func Open(driver string, dataSourceName string, opts ...DBOption) (*DB, error) {
 
 func OpenDB(db *sql.DB, opts ...DBOption) (*DB, error) {
 	res := &DB{
-		r:  newRegistry(),
-		db: db,
+		r:       model.NewRegistry(),
+		db:      db,
+		creator: accessor.NewUnsafeAccess,
 	}
 	for _, opt := range opts {
 		opt(res)
 	}
 	return res, nil
+}
+
+func DBUseReflect() DBOption {
+	return func(db *DB) {
+		db.creator = accessor.NewReflectAccess
+	}
 }
 
 func MustOpen(driver string, dataSourceName string, opts ...DBOption) *DB {

@@ -27,7 +27,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	// table name
 	if d.table == "" {
 		d.sb.WriteByte('`')
-		d.sb.WriteString(d.model.tableName)
+		d.sb.WriteString(d.model.TableName)
 		d.sb.WriteByte('`')
 	} else {
 		// d.sb.WriteByte('`')

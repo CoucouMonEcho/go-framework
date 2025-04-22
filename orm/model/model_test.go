@@ -1,4 +1,4 @@
-package orm
+package model
 
 import (
 	"code-practise/orm/internal/errs"
@@ -11,24 +11,27 @@ import (
 func Test_parseModel(t *testing.T) {
 	fields := []*Field{
 		{
-			goName:  "Id",
-			colName: "id",
-			typ:     reflect.TypeOf(int64(0)),
+			GoName:  "Id",
+			ColName: "id",
+			Type:    reflect.TypeOf(int64(0)),
 		},
 		{
-			goName:  "Age",
-			colName: "age",
-			typ:     reflect.TypeOf(int8(0)),
+			GoName:  "Age",
+			ColName: "age",
+			Type:    reflect.TypeOf(int8(0)),
+			Offset:  8,
 		},
 		{
-			goName:  "FirstName",
-			colName: "first_name",
-			typ:     reflect.TypeOf(""),
+			GoName:  "FirstName",
+			ColName: "first_name",
+			Type:    reflect.TypeOf(""),
+			Offset:  16,
 		},
 		{
-			goName:  "LastName",
-			colName: "last_name",
-			typ:     reflect.TypeOf(&sql.NullString{}),
+			GoName:  "LastName",
+			ColName: "last_name",
+			Type:    reflect.TypeOf(&sql.NullString{}),
+			Offset:  32,
 		},
 	}
 	tests := []struct {
@@ -45,7 +48,7 @@ func Test_parseModel(t *testing.T) {
 			fields: fields,
 			entity: &TestModel{},
 			want: &Model{
-				tableName: "test_model",
+				TableName: "test_model",
 			},
 		},
 		{
@@ -66,11 +69,11 @@ func Test_parseModel(t *testing.T) {
 			fieldMap := make(map[string]*Field)
 			columnMap := make(map[string]*Field)
 			for _, field := range tt.fields {
-				fieldMap[field.goName] = field
-				columnMap[field.colName] = field
+				fieldMap[field.GoName] = field
+				columnMap[field.ColName] = field
 			}
-			tt.want.fieldMap = fieldMap
-			tt.want.columnMap = columnMap
+			tt.want.FieldMap = fieldMap
+			tt.want.ColumnMap = columnMap
 
 			assert.Equal(t, tt.want, got)
 		})
@@ -95,24 +98,27 @@ func Test_registryGet(t *testing.T) {
 			entity: &TestModel{},
 			fields: []*Field{
 				{
-					goName:  "Id",
-					colName: "new_column",
-					typ:     reflect.TypeOf(int64(0)),
+					GoName:  "Id",
+					ColName: "new_column",
+					Type:    reflect.TypeOf(int64(0)),
 				},
 				{
-					goName:  "Age",
-					colName: "age",
-					typ:     reflect.TypeOf(int8(0)),
+					GoName:  "Age",
+					ColName: "age",
+					Type:    reflect.TypeOf(int8(0)),
+					Offset:  8,
 				},
 				{
-					goName:  "FirstName",
-					colName: "first_name",
-					typ:     reflect.TypeOf(string("")),
+					GoName:  "FirstName",
+					ColName: "first_name",
+					Type:    reflect.TypeOf(string("")),
+					Offset:  16,
 				},
 				{
-					goName:  "LastName",
-					colName: "last_name",
-					typ:     reflect.TypeOf(&sql.NullString{}),
+					GoName:  "LastName",
+					ColName: "last_name",
+					Type:    reflect.TypeOf(&sql.NullString{}),
+					Offset:  32,
 				},
 			},
 			opts: []ModelOption{
@@ -120,7 +126,7 @@ func Test_registryGet(t *testing.T) {
 				ModelWithTableName("new_table"),
 			},
 			want: &Model{
-				tableName: "new_table",
+				TableName: "new_table",
 			},
 			cacheSize: 1,
 		},
@@ -139,13 +145,13 @@ func Test_registryGet(t *testing.T) {
 			}(),
 			fields: []*Field{
 				{
-					goName:  "Name",
-					colName: "name_column",
-					typ:     reflect.TypeOf(""),
+					GoName:  "Name",
+					ColName: "name_column",
+					Type:    reflect.TypeOf(""),
 				},
 			},
 			want: &Model{
-				tableName: "tag_table",
+				TableName: "tag_table",
 			},
 		},
 		{
@@ -158,21 +164,21 @@ func Test_registryGet(t *testing.T) {
 			}(),
 			fields: []*Field{
 				{
-					goName:  "Name",
-					colName: "name",
-					typ:     reflect.TypeOf(""),
+					GoName:  "Name",
+					ColName: "name",
+					Type:    reflect.TypeOf(""),
 				},
 			},
 			want: &Model{
-				tableName: "tag_table",
-				fieldMap: map[string]*Field{
+				TableName: "tag_table",
+				FieldMap: map[string]*Field{
 					"Name": {
-						colName: "name",
+						ColName: "name",
 					},
 				},
-				columnMap: map[string]*Field{
+				ColumnMap: map[string]*Field{
 					"name": {
-						colName: "name",
+						ColName: "name",
 					},
 				},
 			},
@@ -192,13 +198,13 @@ func Test_registryGet(t *testing.T) {
 			entity: &CustomTableName{},
 			fields: []*Field{
 				{
-					goName:  "FirstName",
-					colName: "first_name_c",
-					typ:     reflect.TypeOf(""),
+					GoName:  "FirstName",
+					ColName: "first_name_c",
+					Type:    reflect.TypeOf(""),
 				},
 			},
 			want: &Model{
-				tableName: "custom_table_name_t",
+				TableName: "custom_table_name_t",
 			},
 		},
 		{
@@ -206,22 +212,22 @@ func Test_registryGet(t *testing.T) {
 			entity: &CustomTableNamePtr{},
 			fields: []*Field{
 				{
-					goName:  "FirstName",
-					colName: "first_name_c",
-					typ:     reflect.TypeOf(""),
+					GoName:  "FirstName",
+					ColName: "first_name_c",
+					Type:    reflect.TypeOf(""),
 				},
 			},
 			want: &Model{
-				tableName: "custom_table_name_p",
-				fieldMap: map[string]*Field{
+				TableName: "custom_table_name_p",
+				FieldMap: map[string]*Field{
 					"FirstName": {
-						colName: "first_name_c",
+						ColName: "first_name_c",
 					},
 				},
 			},
 		},
 	}
-	r := newRegistry()
+	r := NewRegistry()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			//got, err := r.Get(tt.entity)
@@ -234,15 +240,15 @@ func Test_registryGet(t *testing.T) {
 			fieldMap := make(map[string]*Field)
 			columnMap := make(map[string]*Field)
 			for _, field := range tt.fields {
-				fieldMap[field.goName] = field
-				columnMap[field.colName] = field
+				fieldMap[field.GoName] = field
+				columnMap[field.ColName] = field
 			}
-			tt.want.fieldMap = fieldMap
-			tt.want.columnMap = columnMap
+			tt.want.FieldMap = fieldMap
+			tt.want.ColumnMap = columnMap
 
 			assert.Equal(t, tt.want, got)
 			typ := reflect.TypeOf(tt.entity)
-			cache, ok := r.models.Load(typ)
+			cache, ok := r.(*registry).models.Load(typ)
 			assert.True(t, ok)
 			assert.Equal(t, tt.want, cache)
 		})
@@ -263,4 +269,11 @@ type CustomTableNamePtr struct {
 
 func (c *CustomTableNamePtr) TableName() string {
 	return "custom_table_name_p"
+}
+
+type TestModel struct {
+	Id        int64           `orm:"id()"`
+	Age       int8            `orm:"age(18)"`
+	FirstName string          `orm:"name(first_name)"`
+	LastName  *sql.NullString `orm:"name(last_name)"`
 }

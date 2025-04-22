@@ -12,7 +12,12 @@ import (
 )
 
 func TestSelector_Build(t *testing.T) {
-	db := MustOpen("", "")
+	mockDB, _, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close()
+	db, err := OpenDB(mockDB)
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name    string
 		builder QueryBuilder
