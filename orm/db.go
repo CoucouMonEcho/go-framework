@@ -41,6 +41,13 @@ func DBUseReflect() DBOption {
 	}
 }
 
+// can be used to share the same registry with different dbs
+func DBWithRegistry(r model.Registry) DBOption {
+	return func(db *DB) {
+		db.r = r
+	}
+}
+
 func MustOpen(driver string, dataSourceName string, opts ...DBOption) *DB {
 	res, err := Open(driver, dataSourceName, opts...)
 	if err != nil {

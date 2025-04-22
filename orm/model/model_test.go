@@ -84,7 +84,7 @@ func Test_registryGet(t *testing.T) {
 	tests := []struct {
 		name   string
 		entity any
-		opts   []ModelOption
+		opts   []Option
 
 		fields []*Field
 
@@ -121,9 +121,9 @@ func Test_registryGet(t *testing.T) {
 					Offset:  32,
 				},
 			},
-			opts: []ModelOption{
-				ModelWithColumnName("Id", "new_column"),
-				ModelWithTableName("new_table"),
+			opts: []Option{
+				WithColumnName("Id", "new_column"),
+				WithTableName("new_table"),
 			},
 			want: &Model{
 				TableName: "new_table",

@@ -12,16 +12,17 @@ var _ Access = &unsafeAccess{}
 
 type unsafeAccess struct {
 	model *model.Model
-	// val is pointer of T
-	val any
+	// reference address
+	address unsafe.Pointer
 }
 
 var _ Creator = NewUnsafeAccess
 
 func NewUnsafeAccess(model *model.Model, val any) Access {
+	address := reflect.ValueOf(val).UnsafePointer()
 	return unsafeAccess{
-		model: model,
-		val:   val,
+		model:   model,
+		address: address,
 	}
 }
 
@@ -33,7 +34,6 @@ func (u unsafeAccess) SetColumns(rows *sql.Rows) error {
 	}
 	// scan
 	var vals []any
-	address := reflect.ValueOf(u.val).UnsafePointer()
 	for _, c := range cs {
 		fd, ok := u.model.ColumnMap[c]
 		if !ok {
@@ -41,7 +41,7 @@ func (u unsafeAccess) SetColumns(rows *sql.Rows) error {
 		}
 		// return pointer
 		// address + offset
-		val := reflect.NewAt(fd.Type, unsafe.Pointer(uintptr(address)+fd.Offset))
+		val := reflect.NewAt(fd.Type, unsafe.Pointer(uintptr(u.address)+fd.Offset))
 		//val := reflect.New(fd.Type)
 
 		vals = append(vals, val.Interface())

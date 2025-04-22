@@ -19,18 +19,20 @@ type TableName interface {
 
 type Registry interface {
 	Get(val any) (*Model, error)
-	Register(val any, opts ...ModelOption) (*Model, error)
+	Register(val any, opts ...Option) (*Model, error)
 }
 
+// Model is public but not recommended to use,
+// it is in order to solve circular dependencies
 type Model struct {
 	TableName string
 	FieldMap  map[string]*Field
 	ColumnMap map[string]*Field
 }
 
-type ModelOption func(*Model) error
+type Option func(*Model) error
 
-func ModelWithTableName(tableName string) ModelOption {
+func WithTableName(tableName string) Option {
 	return func(m *Model) error {
 		if tableName == "" {
 			return errs.ErrIllegalTableName
@@ -40,7 +42,7 @@ func ModelWithTableName(tableName string) ModelOption {
 	}
 }
 
-func ModelWithColumnName(field string, colName string) ModelOption {
+func WithColumnName(field string, colName string) Option {
 	return func(m *Model) error {
 		fd, ok := m.FieldMap[field]
 		if !ok {
@@ -117,7 +119,7 @@ func (r *registry) Get(entity any) (*Model, error) {
 //	return m, nil
 //}
 
-func (r *registry) Register(entity any, opts ...ModelOption) (*Model, error) {
+func (r *registry) Register(entity any, opts ...Option) (*Model, error) {
 	pointerType := reflect.TypeOf(entity)
 	if pointerType.Kind() != reflect.Ptr || pointerType.Elem().Kind() != reflect.Struct {
 		return nil, errs.ErrModelNotPointer
