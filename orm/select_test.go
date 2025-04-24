@@ -110,6 +110,55 @@ func TestSelector_Build(t *testing.T) {
 	}
 }
 
+func TestSelector_Select(t *testing.T) {
+	mockDB, _, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close()
+	db, err := OpenDB(mockDB)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name    string
+		builder QueryBuilder
+
+		wantQuery *Query
+		wantErr   error
+	}{
+		{
+			name:    "where",
+			builder: (NewSelector[TestModel](db)).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "multiple columns",
+			builder: (NewSelector[TestModel](db)).Select(C("FirstName"), C("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT `first_name`, `last_name` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "invalid field",
+			builder: (NewSelector[TestModel](db)).Select(C("Field"), C("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantErr: errs.NewErrUnknownField("Field"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			q, err := tc.builder.Build()
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantQuery, q)
+		})
+	}
+}
+
 func TestSelector_Get(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)

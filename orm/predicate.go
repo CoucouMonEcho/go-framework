@@ -8,8 +8,8 @@ type op string
 
 const (
 	opEQ  op = "="
-	opLT  op = "="
-	opGT  op = "="
+	opLT  op = "<"
+	opGT  op = ">"
 	opNOT op = "NOT"
 	opAND op = "AND"
 	opOR  op = "OR"
@@ -19,7 +19,8 @@ func (o op) String() string {
 	return string(o)
 }
 
-// tag interface, which represents an expression
+// Expression tag interface,
+// which represents an expression
 type Expression interface {
 	expr()
 }
@@ -43,26 +44,14 @@ type Predicate struct {
 //	}
 //}
 
-func (Column) expr() {}
-
-type Column struct {
-	name string
-}
-
-func C(name string) Column {
-	return Column{
-		name: name,
-	}
-}
-
 func (value) expr() {}
 
 type value struct {
 	val any
 }
 
-// C("id").Eq(123)
-// subquery sub.C("id").Eq(123)
+// Eq C("id").Eq(123)
+// sub query sub.C("id").Eq(123)
 func (c Column) Eq(arg any) Predicate {
 	return Predicate{
 		left:  c,
@@ -87,7 +76,7 @@ func (c Column) Gt(arg any) Predicate {
 	}
 }
 
-// Not(C("name").Eq("user1"))
+// Not Not(C("name").Eq("user1"))
 func Not(p Predicate) Predicate {
 	return Predicate{
 		op:    opNOT,
@@ -95,7 +84,7 @@ func Not(p Predicate) Predicate {
 	}
 }
 
-// C("id").Eq(123).And(C("name").Eq("user1"))
+// And C("id").Eq(123).And(C("name").Eq("user1"))
 func (left Predicate) And(right Predicate) Predicate {
 	return Predicate{
 		left:  left,
@@ -104,7 +93,7 @@ func (left Predicate) And(right Predicate) Predicate {
 	}
 }
 
-// C("id").Eq(123).Or(C("name").Eq("user1"))
+// Or C("id").Eq(123).Or(C("name").Eq("user1"))
 func (left Predicate) Or(right Predicate) Predicate {
 	return Predicate{
 		left:  left,

@@ -4,9 +4,16 @@ import (
 	"context"
 )
 
+// Selectable tag interface,
+// SELECT {selectable}... for prevent SQL injection problems
+type Selectable interface {
+	selectable()
+}
+
 type Selector[T any] struct {
 	builder
-	table string
+	table   string
+	columns []Selectable
 
 	db *DB
 
@@ -26,7 +33,24 @@ func (s *Selector[T]) Build() (*Query, error) {
 		return nil, err
 	}
 
-	s.sb.WriteString("SELECT * FROM ")
+	s.sb.WriteString("SELECT")
+
+	if len(s.columns) > 0 {
+		for i, col := range s.columns {
+			if i > 0 {
+				s.sb.WriteByte(',')
+			}
+			s.sb.WriteByte(' ')
+			err = s.buildColumns(col.(Column))
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		s.sb.WriteString(" *")
+	}
+
+	s.sb.WriteString(" FROM ")
 
 	// table name
 	if s.table == "" {
@@ -60,6 +84,16 @@ func (s *Selector[T]) addArg(val any) *Selector[T] {
 		s.args = make([]any, 0, 4)
 	}
 	s.args = append(s.args, val)
+	return s
+}
+
+//func (s *Selector[T]) Select(cols ...string) *Selector[T] {
+//	s.columns = cols
+//	return s
+//}
+
+func (s *Selector[T]) Select(cols ...Selectable) *Selector[T] {
+	s.columns = cols
 	return s
 }
 

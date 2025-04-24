@@ -53,18 +53,23 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 	case Column:
-		fd, ok := b.model.FieldMap[exprTrans.name]
-		if !ok {
-			return errs.NewErrUnknownField(exprTrans.name)
-		}
-		b.sb.WriteByte('`')
-		b.sb.WriteString(fd.ColName)
-		b.sb.WriteByte('`')
+		return b.buildColumns(exprTrans)
 	case value:
 		b.args = append(b.args, exprTrans.val)
 		b.sb.WriteByte('?')
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
 	}
+	return nil
+}
+
+func (b *builder) buildColumns(c Column) error {
+	fd, ok := b.model.FieldMap[c.name]
+	if !ok {
+		return errs.NewErrUnknownField(c.name)
+	}
+	b.sb.WriteByte('`')
+	b.sb.WriteString(fd.ColName)
+	b.sb.WriteByte('`')
 	return nil
 }
