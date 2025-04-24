@@ -55,7 +55,9 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 	case Column:
-		return b.buildColumn(exprTrans.name)
+		// implicitly forbidden to use alias in where statements
+		exprTrans.alias = ""
+		return b.buildColumn(exprTrans)
 	case value:
 		b.sb.WriteByte('?')
 		b.addArg(exprTrans.val)
@@ -68,14 +70,19 @@ func (b *builder) buildExpression(expr Expression) error {
 	return nil
 }
 
-func (b *builder) buildColumn(col string) error {
-	fd, ok := b.model.FieldMap[col]
+func (b *builder) buildColumn(col Column) error {
+	fd, ok := b.model.FieldMap[col.name]
 	if !ok {
-		return errs.NewErrUnknownField(col)
+		return errs.NewErrUnknownField(col.name)
 	}
 	b.sb.WriteByte('`')
 	b.sb.WriteString(fd.ColName)
 	b.sb.WriteByte('`')
+	if col.alias != "" {
+		b.sb.WriteString(" AS `")
+		b.sb.WriteString(col.alias)
+		b.sb.WriteByte('`')
+	}
 	return nil
 }
 

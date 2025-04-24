@@ -193,6 +193,14 @@ func TestSelector_Select(t *testing.T) {
 				Args: []any{1},
 			},
 		},
+		{
+			name:    "column as",
+			builder: (NewSelector[TestModel](db)).Select(C("FirstName").As("my_name"), Max("Age").As("max")).Where(C("Age").As("aaa").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT `first_name` AS `my_name`, MAX(`age`) AS `max` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

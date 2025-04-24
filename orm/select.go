@@ -79,16 +79,21 @@ func (s *Selector[T]) buildColumns() error {
 
 		switch c := col.(type) {
 		case Column:
-			if err := s.buildColumn(c.name); err != nil {
+			if err := s.buildColumn(c); err != nil {
 				return err
 			}
 		case Aggregate:
 			s.sb.WriteString(string(c.fn))
 			s.sb.WriteByte('(')
-			if err := s.buildColumn(c.arg); err != nil {
+			if err := s.buildColumn(C(c.arg)); err != nil {
 				return err
 			}
 			s.sb.WriteByte(')')
+			if c.alias != "" {
+				s.sb.WriteString(" AS `")
+				s.sb.WriteString(c.alias)
+				s.sb.WriteByte('`')
+			}
 		case RawExpr:
 			s.sb.WriteString(c.raw)
 			s.addArg(c.args...)

@@ -17,8 +17,9 @@ const (
 // Aggregate
 // AVG("age"), SUM("score"), COUNT("id"), MAX("create_time"), MIN("update_time")
 type Aggregate struct {
-	fn  fn
-	arg string
+	fn    fn
+	arg   string
+	alias string
 }
 
 func (Aggregate) expr() {}
@@ -46,7 +47,7 @@ func Sum(col string) Aggregate {
 	}
 }
 
-func Mix(col string) Aggregate {
+func Max(col string) Aggregate {
 	return Aggregate{
 		fn:  fnMAX,
 		arg: col,
@@ -57,5 +58,13 @@ func Min(col string) Aggregate {
 	return Aggregate{
 		fn:  fnMIN,
 		arg: col,
+	}
+}
+
+func (a Aggregate) As(alias string) Aggregate {
+	return Aggregate{
+		fn:    a.fn,
+		arg:   a.arg,
+		alias: alias,
 	}
 }
