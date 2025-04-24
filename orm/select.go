@@ -34,22 +34,9 @@ func (s *Selector[T]) Build() (*Query, error) {
 	}
 
 	s.sb.WriteString("SELECT")
-
-	if len(s.columns) > 0 {
-		for i, col := range s.columns {
-			if i > 0 {
-				s.sb.WriteByte(',')
-			}
-			s.sb.WriteByte(' ')
-			err = s.buildColumns(col.(Column))
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		s.sb.WriteString(" *")
+	if err = s.buildColumns(); err != nil {
+		return nil, err
 	}
-
 	s.sb.WriteString(" FROM ")
 
 	// table name
@@ -79,12 +66,35 @@ func (s *Selector[T]) Build() (*Query, error) {
 	}, nil
 }
 
-func (s *Selector[T]) addArg(val any) *Selector[T] {
-	if s.args == nil {
-		s.args = make([]any, 0, 4)
+func (s *Selector[T]) buildColumns() error {
+	if len(s.columns) == 0 {
+		s.sb.WriteString(" *")
+		return nil
 	}
-	s.args = append(s.args, val)
-	return s
+	for i, col := range s.columns {
+		if i > 0 {
+			s.sb.WriteByte(',')
+		}
+		s.sb.WriteByte(' ')
+
+		switch c := col.(type) {
+		case Column:
+			if err := s.buildColumn(c.name); err != nil {
+				return err
+			}
+		case Aggregate:
+			s.sb.WriteString(string(c.fn))
+			s.sb.WriteByte('(')
+			if err := s.buildColumn(c.arg); err != nil {
+				return err
+			}
+			s.sb.WriteByte(')')
+		case RawExpr:
+			s.sb.WriteString(c.raw)
+			s.addArg(c.args...)
+		}
+	}
+	return nil
 }
 
 //func (s *Selector[T]) Select(cols ...string) *Selector[T] {

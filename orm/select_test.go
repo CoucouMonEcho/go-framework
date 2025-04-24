@@ -133,6 +133,14 @@ func TestSelector_Select(t *testing.T) {
 			},
 		},
 		{
+			name:    "single columns",
+			builder: (NewSelector[TestModel](db)).Select(C("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT `last_name` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
 			name:    "multiple columns",
 			builder: (NewSelector[TestModel](db)).Select(C("FirstName"), C("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
@@ -144,6 +152,46 @@ func TestSelector_Select(t *testing.T) {
 			name:    "invalid field",
 			builder: (NewSelector[TestModel](db)).Select(C("Field"), C("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantErr: errs.NewErrUnknownField("Field"),
+		},
+		{
+			name:    "single aggregate",
+			builder: (NewSelector[TestModel](db)).Select(Avg("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT AVG(`last_name`) FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "multiple aggregate",
+			builder: (NewSelector[TestModel](db)).Select(Avg("FirstName"), Avg("LastName")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT AVG(`first_name`), AVG(`last_name`) FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "raw",
+			builder: (NewSelector[TestModel](db)).Select(Raw("COUNT(DISTINCT `first_name`)")).Where(C("Age").Eq(18).And(C("FirstName").Eq("user1"))),
+			wantQuery: &Query{
+				SQL:  "SELECT COUNT(DISTINCT `first_name`) FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "raw as predicate",
+			builder: (NewSelector[TestModel](db)).Select(C("FirstName"), C("LastName")).Where(Raw("(`age` = ?) AND (`first_name` = ?)", 18, "user1").AsPredicate()),
+			wantQuery: &Query{
+				SQL:  "SELECT `first_name`, `last_name` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				Args: []any{18, "user1"},
+			},
+		},
+		{
+			name:    "raw used in predicate",
+			builder: (NewSelector[TestModel](db)).Select(C("FirstName"), C("LastName")).Where(C("Id").Eq(Raw("`age` + ?", 1).AsPredicate())),
+			wantQuery: &Query{
+				SQL:  "SELECT `first_name`, `last_name` FROM `test_model` WHERE `id` = (`age` + ?);",
+				Args: []any{1},
+			},
 		},
 	}
 

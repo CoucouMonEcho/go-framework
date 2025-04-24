@@ -51,14 +51,6 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	}, nil
 }
 
-func (d *Deleter[T]) addArg(val any) *Deleter[T] {
-	if d.args == nil {
-		d.args = make([]any, 0, 4)
-	}
-	d.args = append(d.args, val)
-	return d
-}
-
 // id := []int{1, 2, 3}
 // wrong -> s.Where("id in (?, ?, ?)", ids)
 // right -> s.Where("id in (?, ?, ?)", ids...)

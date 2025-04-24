@@ -2,14 +2,14 @@ package orm
 
 import (
 	"code-practise/orm/internal/errs"
-	model2 "code-practise/orm/model"
+	"code-practise/orm/model"
 	"strings"
 )
 
 type builder struct {
 	sb    strings.Builder
 	args  []any
-	model *model2.Model
+	model *model.Model
 }
 
 func (b *builder) buildPredicates(ps []Predicate) error {
@@ -36,11 +36,13 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 		// op
-		if exprTrans.left != nil {
+		if exprTrans.op != "" {
+			if exprTrans.left != nil {
+				b.sb.WriteByte(' ')
+			}
+			b.sb.WriteString(exprTrans.op.String())
 			b.sb.WriteByte(' ')
 		}
-		b.sb.WriteString(exprTrans.op.String())
-		b.sb.WriteByte(' ')
 		// right
 		_, ok = exprTrans.right.(Predicate)
 		if ok {
@@ -53,23 +55,37 @@ func (b *builder) buildExpression(expr Expression) error {
 			b.sb.WriteByte(')')
 		}
 	case Column:
-		return b.buildColumns(exprTrans)
+		return b.buildColumn(exprTrans.name)
 	case value:
-		b.args = append(b.args, exprTrans.val)
 		b.sb.WriteByte('?')
+		b.addArg(exprTrans.val)
+	case RawExpr:
+		b.sb.WriteString(exprTrans.raw)
+		b.addArg(exprTrans.args...)
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
 	}
 	return nil
 }
 
-func (b *builder) buildColumns(c Column) error {
-	fd, ok := b.model.FieldMap[c.name]
+func (b *builder) buildColumn(col string) error {
+	fd, ok := b.model.FieldMap[col]
 	if !ok {
-		return errs.NewErrUnknownField(c.name)
+		return errs.NewErrUnknownField(col)
 	}
 	b.sb.WriteByte('`')
 	b.sb.WriteString(fd.ColName)
 	b.sb.WriteByte('`')
 	return nil
+}
+
+func (b *builder) addArg(vals ...any) {
+	if len(vals) == 0 {
+		return
+	}
+	if b.args == nil {
+		b.args = make([]any, 0, 4)
+	}
+	b.args = append(b.args, vals...)
+	return
 }

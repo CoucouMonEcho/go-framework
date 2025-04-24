@@ -19,12 +19,6 @@ func (o op) String() string {
 	return string(o)
 }
 
-// Expression tag interface,
-// which represents an expression
-type Expression interface {
-	expr()
-}
-
 func (Predicate) expr() {}
 
 type Predicate struct {
@@ -44,11 +38,11 @@ type Predicate struct {
 //	}
 //}
 
-func (value) expr() {}
-
 type value struct {
 	val any
 }
+
+func (value) expr() {}
 
 // Eq C("id").Eq(123)
 // sub query sub.C("id").Eq(123)
@@ -56,7 +50,7 @@ func (c Column) Eq(arg any) Predicate {
 	return Predicate{
 		left:  c,
 		op:    opEQ,
-		right: value{val: arg},
+		right: valueOf(arg),
 	}
 }
 
@@ -64,7 +58,7 @@ func (c Column) Lt(arg any) Predicate {
 	return Predicate{
 		left:  c,
 		op:    opLT,
-		right: value{val: arg},
+		right: valueOf(arg),
 	}
 }
 
@@ -72,7 +66,16 @@ func (c Column) Gt(arg any) Predicate {
 	return Predicate{
 		left:  c,
 		op:    opGT,
-		right: value{val: arg},
+		right: valueOf(arg),
+	}
+}
+
+func valueOf(arg any) Expression {
+	switch val := arg.(type) {
+	case Expression:
+		return val
+	default:
+		return value{val: val}
 	}
 }
 
