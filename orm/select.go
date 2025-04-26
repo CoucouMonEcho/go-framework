@@ -22,6 +22,10 @@ type Selector[T any] struct {
 
 func NewSelector[T any](db *DB) *Selector[T] {
 	return &Selector[T]{
+		builder: builder{
+			dialect: db.dialect,
+			quoter:  db.dialect.quoter(),
+		},
 		db: db,
 	}
 }
@@ -43,13 +47,9 @@ func (s *Selector[T]) Build() (*Query, error) {
 
 	// table name
 	if s.table == "" {
-		s.sb.WriteByte('`')
-		s.sb.WriteString(s.model.TableName)
-		s.sb.WriteByte('`')
+		s.quote(s.model.TableName)
 	} else {
-		// s.sb.WriteByte('`')
 		s.sb.WriteString(s.table)
-		// s.sb.WriteByte('`')
 	}
 
 	// where condition
@@ -81,24 +81,27 @@ func (s *Selector[T]) buildColumns() error {
 
 		switch c := col.(type) {
 		case Column:
-			if err := s.buildColumn(c); err != nil {
+			if err := s.buildColumn(c.name); err != nil {
 				return err
+			}
+			if c.alias != "" {
+				s.sb.WriteString(" AS ")
+				s.quote(c.alias)
 			}
 		case Aggregate:
 			s.sb.WriteString(string(c.fn))
 			s.sb.WriteByte('(')
-			if err := s.buildColumn(C(c.arg)); err != nil {
+			if err := s.buildColumn(c.arg); err != nil {
 				return err
 			}
 			s.sb.WriteByte(')')
 			if c.alias != "" {
-				s.sb.WriteString(" AS `")
-				s.sb.WriteString(c.alias)
-				s.sb.WriteByte('`')
+				s.sb.WriteString(" AS ")
+				s.quote(c.alias)
 			}
 		case RawExpr:
 			s.sb.WriteString(c.raw)
-			s.addArg(c.args...)
+			s.addArgs(c.args...)
 		}
 	}
 	return nil

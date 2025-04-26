@@ -10,6 +10,15 @@ type builder struct {
 	sb    strings.Builder
 	args  []any
 	model *model.Model
+
+	dialect Dialect
+	quoter  byte
+}
+
+func (b *builder) quote(name string) {
+	b.sb.WriteByte(b.quoter)
+	b.sb.WriteString(name)
+	b.sb.WriteByte(b.quoter)
 }
 
 func (b *builder) buildPredicates(ps []Predicate) error {
@@ -57,41 +66,34 @@ func (b *builder) buildExpression(expr Expression) error {
 	case Column:
 		// implicitly forbidden to use alias in where statements
 		exprTrans.alias = ""
-		return b.buildColumn(exprTrans)
+		return b.buildColumn(exprTrans.name)
 	case value:
 		b.sb.WriteByte('?')
-		b.addArg(exprTrans.val)
+		b.addArgs(exprTrans.val)
 	case RawExpr:
 		b.sb.WriteString(exprTrans.raw)
-		b.addArg(exprTrans.args...)
+		b.addArgs(exprTrans.args...)
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
 	}
 	return nil
 }
 
-func (b *builder) buildColumn(col Column) error {
-	fd, ok := b.model.FieldMap[col.name]
+func (b *builder) buildColumn(name string) error {
+	fd, ok := b.model.FieldMap[name]
 	if !ok {
-		return errs.NewErrUnknownField(col.name)
+		return errs.NewErrUnknownField(name)
 	}
-	b.sb.WriteByte('`')
-	b.sb.WriteString(fd.ColName)
-	b.sb.WriteByte('`')
-	if col.alias != "" {
-		b.sb.WriteString(" AS `")
-		b.sb.WriteString(col.alias)
-		b.sb.WriteByte('`')
-	}
+	b.quote(fd.ColName)
 	return nil
 }
 
-func (b *builder) addArg(vals ...any) {
+func (b *builder) addArgs(vals ...any) {
 	if len(vals) == 0 {
 		return
 	}
 	if b.args == nil {
-		b.args = make([]any, 0, 4)
+		b.args = make([]any, 0, 8)
 	}
 	b.args = append(b.args, vals...)
 	return

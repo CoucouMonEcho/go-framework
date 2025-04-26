@@ -14,12 +14,12 @@ type OnDuplicateKeyBuilder[T any] struct {
 	i *Inserter[T]
 }
 
-type OnDuplicateKey[T any] struct {
+type OnDuplicateKey struct {
 	assigns []Assignable
 }
 
 func (o *OnDuplicateKeyBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
-	o.i.onDuplicateKey = &OnDuplicateKey[T]{
+	o.i.onDuplicateKey = &OnDuplicateKey{
 		assigns: assigns,
 	}
 	return o.i
@@ -36,11 +36,15 @@ type Inserter[T any] struct {
 
 	//onDuplicate []Assignable
 
-	onDuplicateKey *OnDuplicateKey[T]
+	onDuplicateKey *OnDuplicateKey
 }
 
 func NewInserter[T any](db *DB) *Inserter[T] {
 	return &Inserter[T]{
+		builder: builder{
+			dialect: db.dialect,
+			quoter:  db.dialect.quoter(),
+		},
 		db: db,
 	}
 }
@@ -59,13 +63,9 @@ func (i *Inserter[T]) Build() (*Query, error) {
 
 	// table name
 	if i.table == "" {
-		i.sb.WriteByte('`')
-		i.sb.WriteString(i.model.TableName)
-		i.sb.WriteByte('`')
+		i.quote(i.model.TableName)
 	} else {
-		// i.sb.WriteByte('`')
 		i.sb.WriteString(i.table)
-		// i.sb.WriteByte('`')
 	}
 
 	// the order in which the map is traversed is random
@@ -87,9 +87,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		if i1 > 0 {
 			i.sb.WriteString(", ")
 		}
-		i.sb.WriteByte('`')
-		i.sb.WriteString(field.ColName)
-		i.sb.WriteByte('`')
+		i.quote(field.ColName)
 		i1++
 	}
 	i.sb.WriteByte(')')
@@ -110,41 +108,15 @@ func (i *Inserter[T]) Build() (*Query, error) {
 			i.sb.WriteByte('?')
 			//TODO use unsafe
 			arg := reflect.ValueOf(val).Elem().FieldByName(field.GoName).Interface()
-			i.addArg(arg)
+			i.addArgs(arg)
 		}
 		i.sb.WriteByte(')')
 	}
 
 	// upsert
 	if i.onDuplicateKey != nil {
-		i.sb.WriteString(" ON DUPLICATE KEY UPDATE ")
-		for i1, assign := range i.onDuplicateKey.assigns {
-			if i1 > 0 {
-				i.sb.WriteString(", ")
-			}
-			switch a := assign.(type) {
-			case Assignment:
-				fd, ok := i.model.FieldMap[a.col]
-				if !ok {
-					return nil, errs.NewErrUnknownField(a.col)
-				}
-				i.sb.WriteByte('`')
-				i.sb.WriteString(fd.ColName)
-				i.sb.WriteString("` = ?")
-				i.addArg(a.val)
-			case Column:
-				fd, ok := i.model.FieldMap[a.name]
-				if !ok {
-					return nil, errs.NewErrUnknownField(a.name)
-				}
-				i.sb.WriteByte('`')
-				i.sb.WriteString(fd.ColName)
-				i.sb.WriteString("` = VALUES(`")
-				i.sb.WriteString(fd.ColName)
-				i.sb.WriteString("`)")
-			default:
-				return nil, errs.NewErrUnsupportedAssignable(a)
-			}
+		if err = i.dialect.buildOnDuplicateKey(&i.builder, i.onDuplicateKey); err != nil {
+			return nil, err
 		}
 	}
 
