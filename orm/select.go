@@ -28,12 +28,14 @@ func NewSelector[T any](db *DB) *Selector[T] {
 
 func (s *Selector[T]) Build() (*Query, error) {
 	var err error
-	s.model, err = s.db.r.Register(new(T))
+	s.model, err = s.db.r.Get(new(T))
 	if err != nil {
 		return nil, err
 	}
 
 	s.sb.WriteString("SELECT")
+
+	// columns
 	if err = s.buildColumns(); err != nil {
 		return nil, err
 	}
@@ -112,16 +114,16 @@ func (s *Selector[T]) Select(cols ...Selectable) *Selector[T] {
 	return s
 }
 
+func (s *Selector[T]) From(table string) *Selector[T] {
+	s.table = table
+	return s
+}
+
 // id := []int{1, 2, 3}
 // wrong -> s.Where("id in (?, ?, ?)", ids)
 // right -> s.Where("id in (?, ?, ?)", ids...)
 func (s *Selector[T]) Where(ps ...Predicate) *Selector[T] {
 	s.where = ps
-	return s
-}
-
-func (s *Selector[T]) From(table string) *Selector[T] {
-	s.table = table
 	return s
 }
 
