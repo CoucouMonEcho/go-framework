@@ -13,7 +13,7 @@ var (
 type Dialect interface {
 	// quoter, MYSQL(`),POSTGRESQL('), ORACLE(")
 	quoter() byte
-	buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error
+	buildUpsert(b *builder, upsert *Upsert) error
 }
 
 var _ Dialect = standardSQL{}
@@ -26,9 +26,43 @@ func (s standardSQL) quoter() byte {
 	panic("implement me")
 }
 
-func (s standardSQL) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
-	//TODO implement me
-	panic("implement me")
+func (s standardSQL) buildUpsert(b *builder, upsert *Upsert) error {
+	b.sb.WriteString(" ON CONFLICT (")
+	for i, col := range upsert.conflictColumns {
+		if i > 0 {
+			b.sb.WriteString(", ")
+		}
+		if err := b.buildColumn(col); err != nil {
+			return err
+		}
+	}
+	b.sb.WriteString(") DO UPDATE SET ")
+	for i, assign := range upsert.assigns {
+		if i > 0 {
+			b.sb.WriteString(", ")
+		}
+		switch a := assign.(type) {
+		case Assignment:
+			fd, ok := b.model.FieldMap[a.col]
+			if !ok {
+				return errs.NewErrUnknownField(a.col)
+			}
+			b.quote(fd.ColName)
+			b.sb.WriteString(" = ?")
+			b.addArgs(a.val)
+		case Column:
+			fd, ok := b.model.FieldMap[a.name]
+			if !ok {
+				return errs.NewErrUnknownField(a.name)
+			}
+			b.quote(fd.ColName)
+			b.sb.WriteString(" = excluded.")
+			b.quote(fd.ColName)
+		default:
+			return errs.NewErrUnsupportedAssignable(a)
+		}
+	}
+	return nil
 }
 
 type mysqlDialect struct {
@@ -40,10 +74,10 @@ func (m mysqlDialect) quoter() byte {
 	return '`'
 }
 
-func (m mysqlDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error {
+func (m mysqlDialect) buildUpsert(b *builder, upsert *Upsert) error {
 	b.sb.WriteString(" ON DUPLICATE KEY UPDATE ")
-	for i1, assign := range odk.assigns {
-		if i1 > 0 {
+	for i, assign := range upsert.assigns {
+		if i > 0 {
 			b.sb.WriteString(", ")
 		}
 		switch a := assign.(type) {
@@ -73,6 +107,10 @@ func (m mysqlDialect) buildOnDuplicateKey(b *builder, odk *OnDuplicateKey) error
 
 type sqliteDialect struct {
 	standardSQL
+}
+
+func (s sqliteDialect) quoter() byte {
+	return '`'
 }
 
 type postgresqlDialect struct {

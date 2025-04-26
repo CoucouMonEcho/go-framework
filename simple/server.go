@@ -95,7 +95,11 @@ func (this *Server) Start() {
 	}
 
 	// close listen socket
-	defer listener.Close()
+	defer func() {
+		if listener != nil {
+			err = listener.Close()
+		}
+	}()
 
 	// listen socket
 	go this.listenMessage()

@@ -12,7 +12,8 @@ var _ Access = &reflectAccess{}
 type reflectAccess struct {
 	model *model.Model
 	// val is pointer of T
-	val any
+	//val any
+	val reflect.Value
 }
 
 var _ Creator = NewReflectAccess
@@ -20,8 +21,20 @@ var _ Creator = NewReflectAccess
 func NewReflectAccess(model *model.Model, val any) Access {
 	return reflectAccess{
 		model: model,
-		val:   val,
+		val:   reflect.ValueOf(val).Elem(),
 	}
+}
+
+func (r reflectAccess) Field(name string) (any, error) {
+	//_, ok := r.val.Type().FieldByName(name)
+	//if !ok {
+	//	return nil, errs.NewErrUnknownField(name)
+	//}
+	res := r.val.FieldByName(name)
+	if res == (reflect.Value{}) {
+		return nil, errs.NewErrUnknownField(name)
+	}
+	return res.Interface(), nil
 }
 
 func (r reflectAccess) SetColumns(rows *sql.Rows) error {
@@ -49,13 +62,12 @@ func (r reflectAccess) SetColumns(rows *sql.Rows) error {
 		return err
 	}
 	// struct
-	tpValue := reflect.ValueOf(r.val)
 	for i, c := range cs {
 		fd, ok := r.model.ColumnMap[c]
 		if !ok {
 			return errs.NewErrUnknownColumn(c)
 		}
-		tpValue.Elem().FieldByName(fd.GoName).Set(valElems[i])
+		r.val.FieldByName(fd.GoName).Set(valElems[i])
 	}
 	return err
 }

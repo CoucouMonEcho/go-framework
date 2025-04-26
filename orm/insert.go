@@ -3,27 +3,37 @@ package orm
 import (
 	"code-practise/orm/internal/errs"
 	"code-practise/orm/model"
-	"reflect"
+	"context"
 )
 
 type Assignable interface {
 	assign()
 }
 
-type OnDuplicateKeyBuilder[T any] struct {
-	i *Inserter[T]
+type UpsertBuilder[T any] struct {
+	i               *Inserter[T]
+	conflictColumns []string
 }
 
-type OnDuplicateKey struct {
-	assigns []Assignable
+func (o *UpsertBuilder[T]) ConflictColumns(cols ...string) *UpsertBuilder[T] {
+	o.conflictColumns = cols
+	return o
 }
 
-func (o *OnDuplicateKeyBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
-	o.i.onDuplicateKey = &OnDuplicateKey{
-		assigns: assigns,
+type Upsert struct {
+	assigns         []Assignable
+	conflictColumns []string
+}
+
+func (o *UpsertBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
+	o.i.upsert = &Upsert{
+		assigns:         assigns,
+		conflictColumns: o.conflictColumns,
 	}
 	return o.i
 }
+
+var _ Executor = &Inserter[any]{}
 
 type Inserter[T any] struct {
 	builder
@@ -33,10 +43,8 @@ type Inserter[T any] struct {
 	db *DB
 
 	values []*T
-
+	upsert *Upsert
 	//onDuplicate []Assignable
-
-	onDuplicateKey *OnDuplicateKey
 }
 
 func NewInserter[T any](db *DB) *Inserter[T] {
@@ -101,21 +109,24 @@ func (i *Inserter[T]) Build() (*Query, error) {
 			i.sb.WriteByte(',')
 		}
 		i.sb.WriteByte('(')
+		acc := i.db.creator(i.model, val)
 		for i2, field := range fields {
 			if i2 > 0 {
 				i.sb.WriteString(", ")
 			}
 			i.sb.WriteByte('?')
-			//TODO use unsafe
-			arg := reflect.ValueOf(val).Elem().FieldByName(field.GoName).Interface()
+			arg, err := acc.Field(field.GoName)
+			if err != nil {
+				return nil, err
+			}
 			i.addArgs(arg)
 		}
 		i.sb.WriteByte(')')
 	}
 
 	// upsert
-	if i.onDuplicateKey != nil {
-		if err = i.dialect.buildOnDuplicateKey(&i.builder, i.onDuplicateKey); err != nil {
+	if i.upsert != nil {
+		if err = i.dialect.buildUpsert(&i.builder, i.upsert); err != nil {
 			return nil, err
 		}
 	}
@@ -147,8 +158,22 @@ func (i *Inserter[T]) Values(vals ...*T) *Inserter[T] {
 //	return i
 //}
 
-func (i *Inserter[T]) OnDuplicateKey() *OnDuplicateKeyBuilder[T] {
-	return &OnDuplicateKeyBuilder[T]{
+func (i *Inserter[T]) OnDuplicateKey() *UpsertBuilder[T] {
+	return &UpsertBuilder[T]{
 		i: i,
+	}
+}
+
+func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	query, err := i.Build()
+	if err != nil {
+		return Result{
+			err: err,
+		}
+	}
+	res, err := i.db.db.Exec(query.SQL, query.Args...)
+	return Result{
+		res: res,
+		err: err,
 	}
 }

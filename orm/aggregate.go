@@ -68,3 +68,27 @@ func (a Aggregate) As(alias string) Aggregate {
 		alias: alias,
 	}
 }
+
+func (a Aggregate) Eq(arg any) Predicate {
+	return Predicate{
+		left:  a,
+		op:    opEQ,
+		right: value{arg},
+	}
+}
+
+func (a Aggregate) Lt(arg any) Predicate {
+	return Predicate{
+		left:  a,
+		op:    opLT,
+		right: value{arg},
+	}
+}
+
+func (a Aggregate) Gt(arg any) Predicate {
+	return Predicate{
+		left:  a,
+		op:    opGT,
+		right: value{arg},
+	}
+}

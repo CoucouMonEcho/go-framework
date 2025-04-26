@@ -26,6 +26,16 @@ func NewUnsafeAccess(model *model.Model, val any) Access {
 	}
 }
 
+func (u unsafeAccess) Field(name string) (any, error) {
+	fd, ok := u.model.FieldMap[name]
+	if !ok {
+		return nil, errs.NewErrUnknownField(name)
+	}
+	// return pointer
+	// address + offset
+	return reflect.NewAt(fd.Type, unsafe.Pointer(uintptr(u.address)+fd.Offset)).Elem().Interface(), nil
+}
+
 func (u unsafeAccess) SetColumns(rows *sql.Rows) error {
 	// select column
 	cs, err := rows.Columns()

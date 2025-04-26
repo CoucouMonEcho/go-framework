@@ -96,6 +96,21 @@ func TestSelector_Build(t *testing.T) {
 				SQL: "SELECT * FROM `test_model`;",
 			},
 		},
+		{
+			name: "complex select",
+			builder: (NewSelector[TestModel](db)).
+				Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))).
+				GroupBy(C("FirstName"), C("Age")).
+				Having(Avg("FirstName").Eq("user1")).
+				OrderBy(Asc("Id"), Desc("Age")).
+				Limit(2).
+				Offset(10),
+			wantQuery: &Query{
+				SQL: "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?) " +
+					"GROUP BY `first_name`, `age` HAVING AVG(`first_name`) = ? ORDER BY `id` ASC, `age` DESC LIMIT ? OFFSET ?;",
+				Args: []any{18, "user1", "user1", 2, 10},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

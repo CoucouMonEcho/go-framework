@@ -30,7 +30,11 @@ func (fu *FileUploader) Handle() HandlerFunc {
 	}
 	return func(ctx *Context) {
 		file, header, err := ctx.Req.FormFile(fu.FileField)
-		defer file.Close()
+		defer func() {
+			if file != nil {
+				err = file.Close()
+			}
+		}()
 		if err != nil {
 			ctx.RespCode = http.StatusInternalServerError
 			ctx.RespData = []byte(err.Error())
@@ -48,7 +52,11 @@ func (fu *FileUploader) Handle() HandlerFunc {
 		// O_TRUNC delete if exists
 		// O_CREATE create
 		dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0o666)
-		defer dstFile.Close()
+		defer func() {
+			if dstFile != nil {
+				err = dstFile.Close()
+			}
+		}()
 		if err != nil {
 			ctx.RespCode = http.StatusInternalServerError
 			ctx.RespData = []byte(err.Error())

@@ -65,8 +65,10 @@ func (b *builder) buildExpression(expr Expression) error {
 		}
 	case Column:
 		// implicitly forbidden to use alias in where statements
-		exprTrans.alias = ""
+		//exprTrans.alias = ""
 		return b.buildColumn(exprTrans.name)
+	case Aggregate:
+		return b.buildAggregate(exprTrans)
 	case value:
 		b.sb.WriteByte('?')
 		b.addArgs(exprTrans.val)
@@ -85,6 +87,16 @@ func (b *builder) buildColumn(name string) error {
 		return errs.NewErrUnknownField(name)
 	}
 	b.quote(fd.ColName)
+	return nil
+}
+
+func (b *builder) buildAggregate(a Aggregate) error {
+	b.sb.WriteString(string(a.fn))
+	b.sb.WriteByte('(')
+	if err := b.buildColumn(a.arg); err != nil {
+		return err
+	}
+	b.sb.WriteByte(')')
 	return nil
 }
 
