@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-type HandlerFunc func(ctx *Context)
+type Handler func(ctx *Context)
 
 type Server interface {
 	http.Handler
 	Start(addr string) error
 
-	addRoute(method string, path string, handlerFunc HandlerFunc, middlewares ...Middleware)
+	addRoute(method string, path string, handler Handler, middlewares ...Middleware)
 }
 
 type HTTPServerOption func(server *HTTPServer)
@@ -61,12 +61,12 @@ func (h *HTTPServer) Use(method string, path string, middlewares ...Middleware) 
 	h.router.addRoute(http.MethodGet, path, nil, middlewares...)
 }
 
-func (h *HTTPServer) Get(path string, handlerFunc HandlerFunc) {
-	h.router.addRoute(http.MethodGet, path, handlerFunc)
+func (h *HTTPServer) Get(path string, handler Handler) {
+	h.router.addRoute(http.MethodGet, path, handler)
 }
 
-func (h *HTTPServer) Post(path string, handlerFunc HandlerFunc) {
-	h.router.addRoute(http.MethodPost, path, handlerFunc)
+func (h *HTTPServer) Post(path string, handler Handler) {
+	h.router.addRoute(http.MethodPost, path, handler)
 }
 
 // ServeHTTP deal request
@@ -80,7 +80,7 @@ func (h *HTTPServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	for i := len(h.middlewares) - 1; i >= 0; i-- {
 		root = h.middlewares[i](root)
 	}
-	m := func(next HandlerFunc) HandlerFunc {
+	m := func(next Handler) Handler {
 		return func(ctx *Context) {
 			next(ctx)
 			h.flushResp(ctx)
@@ -111,16 +111,16 @@ func (h *HTTPServer) serve(ctx *Context) {
 	ctx.MatchedRoute = info.node.route
 
 	middlewares := info.middlewares
-	handler := info.node.handler
+	root := info.node.handler
 	if middlewares != nil {
-		for i := len(middlewares); i >= 0; i-- {
+		for i := len(middlewares) - 1; i >= 0; i-- {
 			if middlewares[i] == nil {
 				continue
 			}
-			handler = middlewares[i](handler)
+			root = middlewares[i](root)
 		}
 	}
-	handler(ctx)
+	root(ctx)
 	return
 }
 

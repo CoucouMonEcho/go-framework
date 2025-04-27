@@ -17,7 +17,7 @@ type FileUploader struct {
 	DstPathFunc func(file *multipart.FileHeader) string
 }
 
-func (fu *FileUploader) Handle() HandlerFunc {
+func (fu *FileUploader) Handle() Handler {
 	// return handler
 	// do some check before handle
 	if fu.FileField == "" {
@@ -100,7 +100,7 @@ type FileDownloader struct {
 	Dir string
 }
 
-func (fd *FileDownloader) Handle() HandlerFunc {
+func (fd *FileDownloader) Handle() Handler {
 	return func(ctx *Context) {
 		req, err := ctx.QueryValue("file").String()
 		if err != nil {

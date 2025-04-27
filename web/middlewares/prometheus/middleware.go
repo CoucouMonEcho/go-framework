@@ -29,7 +29,7 @@ func (m MiddlewareBuilder) Build() web.Middleware {
 		},
 	}, []string{"pattern", "method", "status"})
 	prometheus.MustRegister(vector)
-	return func(next web.HandlerFunc) web.HandlerFunc {
+	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			start := time.Now()
 			defer func() {

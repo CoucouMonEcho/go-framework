@@ -17,7 +17,7 @@ func newRouter() router {
 	}
 }
 
-func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc, middlewares ...Middleware) {
+func (r *router) addRoute(method string, path string, handler Handler, middlewares ...Middleware) {
 	if path == "" {
 		panic("web: empty path")
 	}
@@ -39,7 +39,7 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc, m
 		if root.handler != nil {
 			panic("web: '/' already has a handler")
 		}
-		root.handler = handlerFunc
+		root.handler = handler
 		root.route = "/"
 		root.middlewares = middlewares
 		return
@@ -55,7 +55,7 @@ func (r *router) addRoute(method string, path string, handlerFunc HandlerFunc, m
 	if root.handler != nil {
 		panic(fmt.Sprintf("web: path '%s' already exist", path))
 	}
-	root.handler = handlerFunc
+	root.handler = handler
 	root.route = path
 	root.middlewares = middlewares
 }
@@ -132,7 +132,7 @@ type node struct {
 	path        string
 	children    []*node
 	nodeType    nodeType
-	handler     HandlerFunc
+	handler     Handler
 	middlewares []Middleware
 }
 

@@ -13,7 +13,7 @@ type MiddlewareBuilder struct {
 }
 
 func (m MiddlewareBuilder) Build() web.Middleware {
-	return func(next web.HandlerFunc) web.HandlerFunc {
+	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			defer func() {
 				if err := recover(); err != nil {

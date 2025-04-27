@@ -3,10 +3,19 @@ package accesslog
 import (
 	"code-practise/web"
 	"encoding/json"
+	"fmt"
 )
 
 type MiddlewareBuilder struct {
 	logFunc func(log string)
+}
+
+func NewMiddlewareBuilder() *MiddlewareBuilder {
+	return &MiddlewareBuilder{
+		logFunc: func(log string) {
+			fmt.Println(log)
+		},
+	}
 }
 
 func (m *MiddlewareBuilder) LogFunc(logFunc func(log string)) *MiddlewareBuilder {
@@ -15,7 +24,7 @@ func (m *MiddlewareBuilder) LogFunc(logFunc func(log string)) *MiddlewareBuilder
 }
 
 func (m MiddlewareBuilder) Build() web.Middleware {
-	return func(next web.HandlerFunc) web.HandlerFunc {
+	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			// finish route handler to get matched route
 			defer func() {

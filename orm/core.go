@@ -10,4 +10,6 @@ type core struct {
 	dialect Dialect
 	creator accessor.Creator
 	r       model.Registry
+
+	middlewares []Middleware
 }

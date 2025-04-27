@@ -19,7 +19,7 @@ func (m MiddlewareBuilder) Build() web.Middleware {
 		m.Tracer = otel.GetTracerProvider().Tracer(instrumentationName)
 	}
 
-	return func(next web.HandlerFunc) web.HandlerFunc {
+	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			reqCtx := ctx.Req.Context()
 			// get client trace

@@ -9,26 +9,26 @@ import (
 func TestHTTPServer(t *testing.T) {
 	h := NewHTTPServer()
 	h.middlewares = []Middleware{
-		func(next HandlerFunc) HandlerFunc {
+		func(next Handler) Handler {
 			return func(ctx *Context) {
 				fmt.Println("hello 1 before")
 				next(ctx)
 				fmt.Println("hello 1 after")
 			}
 		},
-		func(next HandlerFunc) HandlerFunc {
+		func(next Handler) Handler {
 			return func(ctx *Context) {
 				fmt.Println("hello 2 before")
 				next(ctx)
 				fmt.Println("hello 2 after")
 			}
 		},
-		func(next HandlerFunc) HandlerFunc {
+		func(next Handler) Handler {
 			return func(ctx *Context) {
 				fmt.Println("break 3")
 			}
 		},
-		func(next HandlerFunc) HandlerFunc {
+		func(next Handler) Handler {
 			return func(ctx *Context) {
 				fmt.Println("can not reach 4")
 			}

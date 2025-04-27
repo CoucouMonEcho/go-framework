@@ -4,6 +4,7 @@ import (
 	"code-practise/orm/internal/errs"
 	"code-practise/orm/model"
 	"context"
+	"database/sql"
 )
 
 type Assignable interface {
@@ -166,15 +167,39 @@ func (i *Inserter[T]) OnDuplicateKey() *UpsertBuilder[T] {
 }
 
 func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	root := i.execHandler
+	for i1 := len(i.middlewares) - 1; i1 >= 0; i1-- {
+		root = i.middlewares[i1](root)
+	}
+	res := root(ctx, &QueryContext{
+		Type:    "INSERT",
+		Builder: i,
+	})
+	if res.Result != nil {
+		return Result{
+			res: res.Result.(sql.Result),
+			err: res.Err,
+		}
+	}
+	return Result{err: res.Err}
+}
+
+var _ Handler = (&Inserter[any]{}).execHandler
+
+func (i *Inserter[T]) execHandler(ctx context.Context, qc *QueryContext) *QueryResult {
 	query, err := i.Build()
 	if err != nil {
-		return Result{
-			err: err,
+		return &QueryResult{
+			Result: Result{
+				err: err,
+			},
 		}
 	}
 	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
-	return Result{
-		res: res,
-		err: err,
+	return &QueryResult{
+		Result: Result{
+			res: res,
+			err: err,
+		},
 	}
 }

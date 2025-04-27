@@ -21,7 +21,7 @@ func TestHttpServer(t *testing.T) {
 		CtxSessKey: "sessionKey",
 	}
 	// login session
-	server := web.NewHTTPServer(web.ServerWithMiddlewares(func(next web.HandlerFunc) web.HandlerFunc {
+	server := web.NewHTTPServer(web.ServerWithMiddlewares(func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			if ctx.Req.URL.Path != "/login" {
 				_, err := m.GetSession(ctx)

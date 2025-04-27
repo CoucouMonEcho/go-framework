@@ -226,14 +226,31 @@ func (s *Selector[T]) Limit(limit int) *Selector[T] {
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
+	root := s.getHandler
+	for i := len(s.middlewares) - 1; i >= 0; i-- {
+		root = s.middlewares[i](root)
+	}
+	res := root(ctx, &QueryContext{
+		Type:    "SELECT",
+		Builder: s,
+	})
+	if res.Result != nil {
+		return res.Result.(*T), res.Err
+	}
+	return nil, res.Err
+}
+
+var _ Handler = (&Selector[any]{}).getHandler
+
+func (s *Selector[T]) getHandler(ctx context.Context, qc *QueryContext) *QueryResult {
 	query, err := s.Limit(1).Build()
 	if err != nil {
-		return nil, err
+		return &QueryResult{Err: err}
 	}
 
 	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	if err != nil {
-		return nil, err
+		return &QueryResult{Err: err}
 	}
 	defer func() {
 		if rows != nil {
@@ -241,14 +258,17 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 		}
 	}()
 	if !rows.Next() {
-		return nil, ErrNoRows
+		return &QueryResult{Err: ErrNoRows}
 	}
 
 	tp := new(T)
 	acc := s.creator(s.model, tp)
 	err = acc.SetColumns(rows)
 
-	return tp, err
+	return &QueryResult{
+		Result: tp,
+		Err:    ErrNoRows,
+	}
 }
 
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
@@ -257,6 +277,7 @@ func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 		return nil, err
 	}
 
+	//TODO handler
 	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	defer func() {
 		if rows != nil {

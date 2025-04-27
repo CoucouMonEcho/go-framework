@@ -8,7 +8,7 @@ import (
 )
 
 var r router
-var mockHandler HandlerFunc
+var mockHandler Handler
 
 func init() {
 	testRoutes := []struct {

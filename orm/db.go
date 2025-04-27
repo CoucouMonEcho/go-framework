@@ -79,6 +79,12 @@ func (db *DB) DoTx(ctx context.Context,
 	return err
 }
 
+func DBWithMiddlewares(middlewares ...Middleware) DBOption {
+	return func(db *DB) {
+		db.middlewares = middlewares
+	}
+}
+
 func DBWithDialect(dialect Dialect) DBOption {
 	return func(db *DB) {
 		db.dialect = dialect
