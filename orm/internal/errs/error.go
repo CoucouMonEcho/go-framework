@@ -18,6 +18,7 @@ var (
 	errUnknownColumn         = errors.New("orm: unknown column")
 	errInvalidTagContent     = errors.New("orm: invalid tag content")
 	errUnsupportedAssignable = errors.New("orm: unsupported assignable")
+	errFailedToRollbackTx    = errors.New("orm: failed to rollback tx")
 )
 
 func NewErrUnsupportedExpression(expr any) error {
@@ -37,5 +38,9 @@ func NewErrInvalidTagContent(pair string) error {
 }
 
 func NewErrUnsupportedAssignable(assign any) error {
-	return fmt.Errorf("%w: %s", errInvalidTagContent, assign)
+	return fmt.Errorf("%w: %s", errUnsupportedAssignable, assign)
+}
+
+func NewErrFailedToRollbackTx(bizErr error, rbErr error, panicked bool) error {
+	return fmt.Errorf("%w: %w, %s, %t", errFailedToRollbackTx, bizErr, rbErr, panicked)
 }

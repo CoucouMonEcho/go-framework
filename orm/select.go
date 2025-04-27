@@ -17,7 +17,7 @@ type Selector[T any] struct {
 	table   string
 	columns []Selectable
 
-	db *DB
+	sess Session
 
 	groupBy []Column
 	having  []Predicate
@@ -27,19 +27,20 @@ type Selector[T any] struct {
 	offset  int
 }
 
-func NewSelector[T any](db *DB) *Selector[T] {
+func NewSelector[T any](sess Session) *Selector[T] {
+	c := sess.getCore()
 	return &Selector[T]{
 		builder: builder{
-			dialect: db.dialect,
-			quoter:  db.dialect.quoter(),
+			core:   c,
+			quoter: c.dialect.quoter(),
 		},
-		db: db,
+		sess: sess,
 	}
 }
 
 func (s *Selector[T]) Build() (*Query, error) {
 	var err error
-	s.model, err = s.db.r.Get(new(T))
+	s.model, err = s.r.Get(new(T))
 	if err != nil {
 		return nil, err
 	}
@@ -230,8 +231,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 		return nil, err
 	}
 
-	db := s.db.db
-	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	}
 
 	tp := new(T)
-	acc := s.db.creator(s.model, tp)
+	acc := s.creator(s.model, tp)
 	err = acc.SetColumns(rows)
 
 	return tp, err
@@ -257,8 +257,7 @@ func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 		return nil, err
 	}
 
-	db := s.db.db
-	rows, err := db.QueryContext(ctx, query.SQL, query.Args...)
+	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
 	defer func() {
 		if rows != nil {
 			err = rows.Close()
@@ -271,7 +270,7 @@ func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 
 	for rows.Next() {
 		tp := new(T)
-		acc := s.db.creator(s.model, tp)
+		acc := s.creator(s.model, tp)
 		err = acc.SetColumns(rows)
 
 		tps = append(tps, tp)

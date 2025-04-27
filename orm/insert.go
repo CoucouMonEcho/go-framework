@@ -40,20 +40,21 @@ type Inserter[T any] struct {
 	table   string
 	columns []string
 
-	db *DB
+	sess Session
 
 	values []*T
 	upsert *Upsert
 	//onDuplicate []Assignable
 }
 
-func NewInserter[T any](db *DB) *Inserter[T] {
+func NewInserter[T any](sess Session) *Inserter[T] {
+	c := sess.getCore()
 	return &Inserter[T]{
 		builder: builder{
-			dialect: db.dialect,
-			quoter:  db.dialect.quoter(),
+			core:   c,
+			quoter: c.dialect.quoter(),
 		},
-		db: db,
+		sess: sess,
 	}
 }
 
@@ -62,7 +63,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		return nil, errs.ErrInsertZeroRow
 	}
 	var err error
-	i.model, err = i.db.r.Get(i.values[0])
+	i.model, err = i.r.Get(i.values[0])
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (i *Inserter[T]) Build() (*Query, error) {
 			i.sb.WriteByte(',')
 		}
 		i.sb.WriteByte('(')
-		acc := i.db.creator(i.model, val)
+		acc := i.creator(i.model, val)
 		for i2, field := range fields {
 			if i2 > 0 {
 				i.sb.WriteString(", ")
@@ -171,7 +172,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 			err: err,
 		}
 	}
-	res, err := i.db.db.Exec(query.SQL, query.Args...)
+	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
 	return Result{
 		res: res,
 		err: err,

@@ -7,16 +7,12 @@ import (
 	"reflect"
 )
 
-var _ Access = &reflectAccess{}
-
 type reflectAccess struct {
 	model *model.Model
 	// val is pointer of T
 	//val any
 	val reflect.Value
 }
-
-var _ Creator = NewReflectAccess
 
 func NewReflectAccess(model *model.Model, val any) Access {
 	return reflectAccess{

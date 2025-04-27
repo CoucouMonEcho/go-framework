@@ -8,15 +8,11 @@ import (
 	"unsafe"
 )
 
-var _ Access = &unsafeAccess{}
-
 type unsafeAccess struct {
 	model *model.Model
 	// reference address
 	address unsafe.Pointer
 }
-
-var _ Creator = NewUnsafeAccess
 
 func NewUnsafeAccess(model *model.Model, val any) Access {
 	address := reflect.ValueOf(val).UnsafePointer()
