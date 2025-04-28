@@ -1,10 +1,15 @@
 package orm
 
-import "context"
+import (
+	"code-practise/orm/model"
+	"context"
+)
 
 type QueryContext struct {
 	Type    string
 	Builder QueryBuilder
+
+	Model *model.Model
 }
 
 type QueryResult struct {

@@ -26,7 +26,6 @@ func (m *MiddlewareBuilder) LogFunc(logFunc func(sql string, args []any)) *Middl
 func (m MiddlewareBuilder) Build() orm.Middleware {
 	return func(next orm.Handler) orm.Handler {
 		return func(ctx context.Context, qc *orm.QueryContext) *orm.QueryResult {
-
 			query, err := qc.Builder.Build()
 			if err != nil {
 				return &orm.QueryResult{

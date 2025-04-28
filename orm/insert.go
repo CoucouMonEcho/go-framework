@@ -64,9 +64,10 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		return nil, errs.ErrInsertZeroRow
 	}
 	var err error
-	i.model, err = i.r.Get(i.values[0])
-	if err != nil {
-		return nil, err
+	if i.model == nil {
+		if i.model, err = i.r.Get(new(T)); err != nil {
+			return nil, err
+		}
 	}
 
 	i.sb.WriteString("INSERT INTO ")
@@ -167,6 +168,11 @@ func (i *Inserter[T]) OnDuplicateKey() *UpsertBuilder[T] {
 }
 
 func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	var err error
+	if i.model, err = i.r.Get(new(T)); err != nil {
+		return Result{err: err}
+	}
+
 	root := i.execHandler
 	for i1 := len(i.middlewares) - 1; i1 >= 0; i1-- {
 		root = i.middlewares[i1](root)
@@ -174,14 +180,15 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	res := root(ctx, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,
+		Model:   i.model,
 	})
-	if res.Result != nil {
-		return Result{
-			res: res.Result.(sql.Result),
-			err: res.Err,
-		}
+	if res.Result == nil {
+		return Result{err: res.Err}
 	}
-	return Result{err: res.Err}
+	return Result{
+		res: res.Result.(sql.Result),
+		err: res.Err,
+	}
 }
 
 var _ Handler = (&Inserter[any]{}).execHandler

@@ -40,9 +40,10 @@ func NewSelector[T any](sess Session) *Selector[T] {
 
 func (s *Selector[T]) Build() (*Query, error) {
 	var err error
-	s.model, err = s.r.Get(new(T))
-	if err != nil {
-		return nil, err
+	if s.model == nil {
+		if s.model, err = s.r.Get(new(T)); err != nil {
+			return nil, err
+		}
 	}
 
 	s.sb.WriteString("SELECT")
@@ -226,13 +227,20 @@ func (s *Selector[T]) Limit(limit int) *Selector[T] {
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
+	// initialize model
+	var err error
+	if s.model, err = s.r.Get(new(T)); err != nil {
+		return nil, err
+	}
 	root := s.getHandler
+	// handler not executed -> build method not executed -> model need initialized
 	for i := len(s.middlewares) - 1; i >= 0; i-- {
 		root = s.middlewares[i](root)
 	}
 	res := root(ctx, &QueryContext{
 		Type:    "SELECT",
 		Builder: s,
+		Model:   s.model,
 	})
 	if res.Result != nil {
 		return res.Result.(*T), res.Err
