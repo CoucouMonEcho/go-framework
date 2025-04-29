@@ -13,7 +13,7 @@ type QueryContext struct {
 }
 
 type QueryResult struct {
-	// Result SELECT: *T []*T others: Result
+	// Result SELECT: *T []*T others: sql.Result
 	Result any
 	Err    error
 }

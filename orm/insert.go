@@ -168,16 +168,12 @@ func (i *Inserter[T]) OnDuplicateKey() *UpsertBuilder[T] {
 }
 
 func (i *Inserter[T]) Exec(ctx context.Context) Result {
+	// initialize model
 	var err error
 	if i.model, err = i.r.Get(new(T)); err != nil {
 		return Result{err: err}
 	}
-
-	root := i.execHandler
-	for i1 := len(i.middlewares) - 1; i1 >= 0; i1-- {
-		root = i.middlewares[i1](root)
-	}
-	res := root(ctx, &QueryContext{
+	res := exec(ctx, i.sess, i.core, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,
 		Model:   i.model,
@@ -188,25 +184,5 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	return Result{
 		res: res.Result.(sql.Result),
 		err: res.Err,
-	}
-}
-
-var _ Handler = (&Inserter[any]{}).execHandler
-
-func (i *Inserter[T]) execHandler(ctx context.Context, qc *QueryContext) *QueryResult {
-	query, err := i.Build()
-	if err != nil {
-		return &QueryResult{
-			Result: Result{
-				err: err,
-			},
-		}
-	}
-	res, err := i.sess.execContext(ctx, query.SQL, query.Args...)
-	return &QueryResult{
-		Result: Result{
-			res: res,
-			err: err,
-		},
 	}
 }

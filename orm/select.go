@@ -232,14 +232,9 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	if s.model, err = s.r.Get(new(T)); err != nil {
 		return nil, err
 	}
-	root := s.getHandler
-	// handler not executed -> build method not executed -> model need initialized
-	for i := len(s.middlewares) - 1; i >= 0; i-- {
-		root = s.middlewares[i](root)
-	}
-	res := root(ctx, &QueryContext{
+	res := get[T](ctx, s.sess, s.core, &QueryContext{
 		Type:    "SELECT",
-		Builder: s,
+		Builder: s.Limit(1),
 		Model:   s.model,
 	})
 	if res.Result != nil {
@@ -248,61 +243,19 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	return nil, res.Err
 }
 
-var _ Handler = (&Selector[any]{}).getHandler
-
-func (s *Selector[T]) getHandler(ctx context.Context, qc *QueryContext) *QueryResult {
-	query, err := s.Limit(1).Build()
-	if err != nil {
-		return &QueryResult{Err: err}
-	}
-
-	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
-	if err != nil {
-		return &QueryResult{Err: err}
-	}
-	defer func() {
-		if rows != nil {
-			err = rows.Close()
-		}
-	}()
-	if !rows.Next() {
-		return &QueryResult{Err: ErrNoRows}
-	}
-
-	tp := new(T)
-	acc := s.creator(s.model, tp)
-	err = acc.SetColumns(rows)
-
-	return &QueryResult{
-		Result: tp,
-		Err:    ErrNoRows,
-	}
-}
-
 func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
-	query, err := s.Build()
-	if err != nil {
+	// initialize model
+	var err error
+	if s.model, err = s.r.Get(new(T)); err != nil {
 		return nil, err
 	}
-
-	//TODO handler
-	rows, err := s.sess.queryContext(ctx, query.SQL, query.Args...)
-	defer func() {
-		if rows != nil {
-			err = rows.Close()
-		}
-	}()
-	if err != nil {
-		return nil, err
+	res := getMulti[T](ctx, s.sess, s.core, &QueryContext{
+		Type:    "SELECT",
+		Builder: s,
+		Model:   s.model,
+	})
+	if res.Result != nil {
+		return res.Result.([]*T), res.Err
 	}
-	tps := make([]*T, 16)
-
-	for rows.Next() {
-		tp := new(T)
-		acc := s.creator(s.model, tp)
-		err = acc.SetColumns(rows)
-
-		tps = append(tps, tp)
-	}
-	return tps, nil
+	return nil, res.Err
 }

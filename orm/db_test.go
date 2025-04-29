@@ -9,11 +9,14 @@ import (
 )
 
 func TestDB_Tx(t *testing.T) {
-	mockDB, _, err := sqlmock.New()
+	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer mockDB.Close()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
+
+	mock.ExpectBegin()
+	mock.ExpectCommit()
 
 	err = db.DoTx(context.Background(), func(ctx context.Context, tx *Tx) error {
 		// do something
