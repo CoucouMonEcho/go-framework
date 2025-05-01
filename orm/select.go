@@ -1,6 +1,7 @@
 package orm
 
 import (
+	"code-practise/orm/internal/errs"
 	"context"
 )
 
@@ -12,9 +13,11 @@ type Selectable interface {
 
 var _ Querier[any] = &Selector[any]{}
 
+var _ QueryBuilder = &Selector[any]{}
+
 type Selector[T any] struct {
 	builder
-	table   string
+	table   TableReference
 	columns []Selectable
 
 	sess Session
@@ -55,10 +58,8 @@ func (s *Selector[T]) Build() (*Query, error) {
 	s.sb.WriteString(" FROM ")
 
 	// table name
-	if s.table == "" {
-		s.quote(s.model.TableName)
-	} else {
-		s.sb.WriteString(s.table)
+	if err = s.buildTable(s.table); err != nil {
+		return nil, err
 	}
 
 	// where
@@ -77,7 +78,7 @@ func (s *Selector[T]) Build() (*Query, error) {
 			if i > 0 {
 				s.sb.WriteString(", ")
 			}
-			if err = s.buildColumn(col.name); err != nil {
+			if err = s.buildColumn(col); err != nil {
 				return nil, err
 			}
 		}
@@ -99,7 +100,7 @@ func (s *Selector[T]) Build() (*Query, error) {
 			if i > 0 {
 				s.sb.WriteString(", ")
 			}
-			if err = s.buildColumn(ob.column.name); err != nil {
+			if err = s.buildColumn(ob.column); err != nil {
 				return nil, err
 			}
 			s.sb.WriteByte(' ')
@@ -126,6 +127,77 @@ func (s *Selector[T]) Build() (*Query, error) {
 	}, nil
 }
 
+func (b *builder) buildTable(table TableReference) error {
+	switch tableTrans := table.(type) {
+	case nil:
+		b.quote(b.model.TableName)
+	case Join:
+		// left
+		_, ok := tableTrans.left.(Join)
+		if ok {
+			b.sb.WriteByte('(')
+		}
+		if err := b.buildTable(tableTrans.left); err != nil {
+			return err
+		}
+		if ok {
+			b.sb.WriteByte(')')
+		}
+		// typ
+		if tableTrans.typ != "" {
+			if tableTrans.left != nil {
+				b.sb.WriteByte(' ')
+			}
+			b.sb.WriteString(tableTrans.typ)
+			b.sb.WriteByte(' ')
+		}
+		// right
+		_, ok = tableTrans.right.(Join)
+		if ok {
+			b.sb.WriteByte('(')
+		}
+		if err := b.buildTable(tableTrans.right); err != nil {
+			return err
+		}
+		if ok {
+			b.sb.WriteByte(')')
+		}
+		// on
+		if len(tableTrans.on) > 0 {
+			b.sb.WriteString(" ON ")
+			if err := b.buildPredicates(tableTrans.on); err != nil {
+				return err
+			}
+		}
+		// using
+		if len(tableTrans.using) > 0 {
+			b.sb.WriteString(" USING (")
+			for i, col := range tableTrans.using {
+				if i > 0 {
+					b.sb.WriteString(", ")
+				}
+				if err := b.buildColumn(C(col)); err != nil {
+					return err
+				}
+			}
+			b.sb.WriteByte(')')
+		}
+	case Table:
+		m, err := b.r.Get(tableTrans.entity)
+		if err != nil {
+			return err
+		}
+		b.quote(m.TableName)
+		if tableTrans.alias != "" {
+			b.sb.WriteString(" AS ")
+			b.quote(tableTrans.alias)
+		}
+	default:
+		return errs.NewErrUnsupportedTableReference(table)
+	}
+	return nil
+}
+
 func (s *Selector[T]) buildColumns() error {
 	if len(s.columns) == 0 {
 		s.sb.WriteString(" *")
@@ -139,7 +211,7 @@ func (s *Selector[T]) buildColumns() error {
 
 		switch c := col.(type) {
 		case Column:
-			if err := s.buildColumn(c.name); err != nil {
+			if err := s.buildColumn(c); err != nil {
 				return err
 			}
 			if c.alias != "" {
@@ -172,7 +244,7 @@ func (s *Selector[T]) Select(cols ...Selectable) *Selector[T] {
 	return s
 }
 
-func (s *Selector[T]) From(table string) *Selector[T] {
+func (s *Selector[T]) From(table TableReference) *Selector[T] {
 	s.table = table
 	return s
 }

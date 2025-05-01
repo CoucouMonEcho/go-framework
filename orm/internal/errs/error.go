@@ -13,12 +13,13 @@ var (
 	ErrInsertZeroRow     = errors.New("orm: insert zero row")
 
 	// @NewErrUnsupportedExpression, use AST generate error documentation
-	errUnsupportedExpression = errors.New("orm: unsupported expression expr")
-	errUnknownField          = errors.New("orm: unknown field")
-	errUnknownColumn         = errors.New("orm: unknown column")
-	errInvalidTagContent     = errors.New("orm: invalid tag content")
-	errUnsupportedAssignable = errors.New("orm: unsupported assignable")
-	errFailedToRollbackTx    = errors.New("orm: failed to rollback tx")
+	errUnsupportedExpression     = errors.New("orm: unsupported expression expr")
+	errUnknownField              = errors.New("orm: unknown field")
+	errUnknownColumn             = errors.New("orm: unknown column")
+	errInvalidTagContent         = errors.New("orm: invalid tag content")
+	errUnsupportedAssignable     = errors.New("orm: unsupported assignable")
+	errFailedToRollbackTx        = errors.New("orm: failed to rollback tx")
+	errUnsupportedTableReference = errors.New("orm: unsupported table reference")
 )
 
 func NewErrUnsupportedExpression(expr any) error {
@@ -43,4 +44,8 @@ func NewErrUnsupportedAssignable(assign any) error {
 
 func NewErrFailedToRollbackTx(bizErr error, rbErr error, panicked bool) error {
 	return fmt.Errorf("%w: %w, %s, %t", errFailedToRollbackTx, bizErr, rbErr, panicked)
+}
+
+func NewErrUnsupportedTableReference(table any) error {
+	return fmt.Errorf("%w: %s", errUnsupportedTableReference, table)
 }

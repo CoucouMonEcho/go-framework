@@ -1,6 +1,7 @@
 package orm
 
 type Column struct {
+	table TableReference
 	name  string
 	alias string
 }
@@ -21,5 +22,6 @@ func (c Column) As(alias string) Column {
 	return Column{
 		name:  c.name,
 		alias: alias,
+		table: c.table,
 	}
 }

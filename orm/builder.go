@@ -63,7 +63,7 @@ func (b *builder) buildExpression(expr Expression) error {
 	case Column:
 		// implicitly forbidden to use alias in where statements
 		//exprTrans.alias = ""
-		return b.buildColumn(exprTrans.name)
+		return b.buildColumn(exprTrans)
 	case Aggregate:
 		return b.buildAggregate(exprTrans)
 	case value:
@@ -78,19 +78,40 @@ func (b *builder) buildExpression(expr Expression) error {
 	return nil
 }
 
-func (b *builder) buildColumn(name string) error {
-	fd, ok := b.model.FieldMap[name]
-	if !ok {
-		return errs.NewErrUnknownField(name)
+func (b *builder) buildColumn(c Column) error {
+	switch table := c.table.(type) {
+	case nil:
+		fd, ok := b.model.FieldMap[c.name]
+		if !ok {
+			return errs.NewErrUnknownField(c.name)
+		}
+		b.quote(fd.ColName)
+	case Table:
+		m, err := b.r.Get(table.entity)
+		if err != nil {
+			return err
+		}
+		fd, ok := m.FieldMap[c.name]
+		if !ok {
+			return errs.NewErrUnknownField(c.name)
+		}
+		if table.alias != "" {
+			b.quote(table.alias)
+		} else {
+			b.quote(m.TableName)
+		}
+		b.sb.WriteByte('.')
+		b.quote(fd.ColName)
+	default:
+		return errs.NewErrUnsupportedTableReference(table)
 	}
-	b.quote(fd.ColName)
 	return nil
 }
 
 func (b *builder) buildAggregate(a Aggregate) error {
 	b.sb.WriteString(string(a.fn))
 	b.sb.WriteByte('(')
-	if err := b.buildColumn(a.arg); err != nil {
+	if err := b.buildColumn(C(a.arg)); err != nil {
 		return err
 	}
 	b.sb.WriteByte(')')

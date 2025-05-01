@@ -11,6 +11,11 @@ type Assignable interface {
 	assign()
 }
 
+type Upsert struct {
+	assigns         []Assignable
+	conflictColumns []string
+}
+
 type UpsertBuilder[T any] struct {
 	i               *Inserter[T]
 	conflictColumns []string
@@ -19,11 +24,6 @@ type UpsertBuilder[T any] struct {
 func (o *UpsertBuilder[T]) ConflictColumns(cols ...string) *UpsertBuilder[T] {
 	o.conflictColumns = cols
 	return o
-}
-
-type Upsert struct {
-	assigns         []Assignable
-	conflictColumns []string
 }
 
 func (o *UpsertBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {

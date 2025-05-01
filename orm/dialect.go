@@ -32,7 +32,7 @@ func (s standardSQL) buildUpsert(b *builder, upsert *Upsert) error {
 		if i > 0 {
 			b.sb.WriteString(", ")
 		}
-		if err := b.buildColumn(col); err != nil {
+		if err := b.buildColumn(C(col)); err != nil {
 			return err
 		}
 	}

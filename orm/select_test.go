@@ -33,30 +33,30 @@ func TestSelector_Build(t *testing.T) {
 				Args: nil,
 			},
 		},
-		{
-			name:    "from",
-			builder: (NewSelector[TestModel](db)).From("test_model"),
-			wantQuery: &Query{
-				SQL:  "SELECT * FROM test_model;",
-				Args: nil,
-			},
-		},
-		{
-			name:    "empty from",
-			builder: (NewSelector[TestModel](db)).From(""),
-			wantQuery: &Query{
-				SQL:  "SELECT * FROM `test_model`;",
-				Args: nil,
-			},
-		},
-		{
-			name:    "db from",
-			builder: (NewSelector[TestModel](db)).From("`test_db`.`test_model`"),
-			wantQuery: &Query{
-				SQL:  "SELECT * FROM `test_db`.`test_model`;",
-				Args: nil,
-			},
-		},
+		//{
+		//	name:    "from",
+		//	builder: (NewSelector[TestModel](db)).From("test_model"),
+		//	wantQuery: &Query{
+		//		SQL:  "SELECT * FROM test_model;",
+		//		Args: nil,
+		//	},
+		//},
+		//{
+		//	name:    "empty from",
+		//	builder: (NewSelector[TestModel](db)).From(""),
+		//	wantQuery: &Query{
+		//		SQL:  "SELECT * FROM `test_model`;",
+		//		Args: nil,
+		//	},
+		//},
+		//{
+		//	name:    "db from",
+		//	builder: (NewSelector[TestModel](db)).From("`test_db`.`test_model`"),
+		//	wantQuery: &Query{
+		//		SQL:  "SELECT * FROM `test_db`.`test_model`;",
+		//		Args: nil,
+		//	},
+		//},
 		{
 			name:    "where",
 			builder: (NewSelector[TestModel](db)).Where(C("Age").Eq(18)),
@@ -301,6 +301,116 @@ func TestSelector_Get(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tc.wantRes, res)
+		})
+	}
+}
+
+func TestSelector_Join(t *testing.T) {
+	mockDB, _, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close()
+	db, err := OpenDB(mockDB)
+	require.NoError(t, err)
+
+	type Order struct {
+		Id        int64
+		UsingCol1 string
+		UsingCol2 string
+	}
+	type OrderDetail struct {
+		OrderId int64
+		ItemId  int
+
+		UsingCol1 string
+		UsingCol2 string
+	}
+	type Item struct {
+		Id int
+	}
+
+	testCases := []struct {
+		name    string
+		builder QueryBuilder
+
+		wantQuery *Query
+		wantErr   error
+	}{
+		{
+			name:    "specify table",
+			builder: NewSelector[TestModel](db).From(TableOf(&OrderDetail{})),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `order_detail`;",
+				Args: nil,
+			},
+		},
+		{
+			name: "join using",
+			builder: func() QueryBuilder {
+				t1 := TableOf(&Order{})
+				t2 := TableOf(&OrderDetail{})
+				t3 := t1.Join(t2).Using("UsingCol1", "UsingCol2")
+				return NewSelector[OrderDetail](db).From(t3)
+			}(),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `order` JOIN `order_detail` USING (`using_col1`, `using_col2`);",
+				Args: nil,
+			},
+		},
+		{
+			name: "join on",
+			builder: func() QueryBuilder {
+				t1 := TableOf(&Order{}).As("t1")
+				t2 := TableOf(&OrderDetail{}).As("t2")
+				t3 := t1.Join(t2).On(t1.C("Id").Eq(t2.C("OrderId")))
+				t4 := TableOf(&Item{}).As("t4")
+				t5 := t3.Join(t4).On(t2.C("ItemId").Eq(t4.C("Id")))
+				return NewSelector[Order](db).From(t5)
+			}(),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM (`order` AS `t1` JOIN `order_detail` AS `t2` ON `t1`.`id` = `t2`.`order_id`) JOIN `item` AS `t4` ON `t2`.`item_id` = `t4`.`id`;",
+				Args: nil,
+			},
+		},
+		{
+			name: "join join",
+			builder: func() QueryBuilder {
+				t1 := TableOf(&Order{}).As("t1")
+				t2 := TableOf(&OrderDetail{}).As("t2")
+				t3 := t1.Join(t2).On(t1.C("Id").Eq(t2.C("OrderId")))
+				t4 := TableOf(&Item{}).As("t4")
+				t5 := t4.Join(t3).On(t2.C("ItemId").Eq(t4.C("Id")))
+				return NewSelector[Order](db).From(t5)
+			}(),
+			wantQuery: &Query{
+				SQL:  "SELECT * FROM `item` AS `t4` JOIN (`order` AS `t1` JOIN `order_detail` AS `t2` ON `t1`.`id` = `t2`.`order_id`) ON `t2`.`item_id` = `t4`.`id`;",
+				Args: nil,
+			},
+		},
+		{
+			name: "complex select",
+			builder: (NewSelector[TestModel](db)).
+				Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))).
+				GroupBy(C("FirstName"), C("Age")).
+				Having(Avg("FirstName").Eq("user1")).
+				OrderBy(Asc("Id"), Desc("Age")).
+				Limit(2).
+				Offset(10),
+			wantQuery: &Query{
+				SQL: "SELECT * FROM `test_model` WHERE (`age` = ?) OR (`first_name` = ?) " +
+					"GROUP BY `first_name`, `age` HAVING AVG(`first_name`) = ? ORDER BY `id` ASC, `age` DESC LIMIT ? OFFSET ?;",
+				Args: []any{18, "user1", "user1", 2, 10},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			q, err := tc.builder.Build()
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.wantQuery, q)
 		})
 	}
 }
