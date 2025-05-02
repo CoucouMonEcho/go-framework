@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "/gen";
+
+// protoc --go_out=. ./user.proto
+message User {
+  int64 id =1;
+  string name = 2;
+}

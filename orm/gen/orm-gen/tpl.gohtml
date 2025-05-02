@@ -1,0 +1,7 @@
+package {{ .Package}}
+
+import (
+	"code-practise/orm"{{range $idx, $import := .Imports}}
+	{{$import}}
+{{end -}}
+)
