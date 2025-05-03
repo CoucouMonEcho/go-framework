@@ -5,3 +5,14 @@ import (
 	{{$import}}
 {{end -}}
 )
+{{$ops := .Ops}}{{range $idx, $type := .Types}}
+const (
+{{range $jdx, $field := $type.Fields}}	{{$type.Name}}{{$field.Name}} = "{{$field.Name}}"
+{{end -}}
+)
+{{range $jdx, $field := $type.Fields}}{{range $kdx, $op := $ops}}
+func {{$type.Name}}{{$field.Name}}{{$op}}(val {{$field.Type}}) orm.Predicate {
+	return orm.C("{{$field.Name}}").{{$op}}(val)
+}
+{{end -}}{{end -}}
+{{end -}}

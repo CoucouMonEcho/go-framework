@@ -16,7 +16,7 @@ func Test_gen(t *testing.T) {
 
 import (
 	"code-practise/orm"
-	sql  "database/sql"
+	sql "database/sql"
 )`, buffer.String())
 }
 

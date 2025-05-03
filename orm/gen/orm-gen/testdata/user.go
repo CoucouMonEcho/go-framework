@@ -1,7 +1,7 @@
 package testdata
 
 import (
-	sql "database/sql"
+	"database/sql"
 )
 
 type User struct {
