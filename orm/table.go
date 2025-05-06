@@ -3,6 +3,7 @@ package orm
 var (
 	_ TableReference = &Table{}
 	_ TableReference = &Join{}
+	_ TableReference = &Subquery{}
 )
 
 type TableReference interface {
@@ -18,10 +19,7 @@ func TableOf(entity any) Table {
 	return Table{entity: entity}
 }
 
-func (t Table) table() {
-	//TODO implement me
-	panic("implement me")
-}
+func (Table) table() {}
 
 func (t Table) As(alias string) Table {
 	return Table{
@@ -69,10 +67,7 @@ type Join struct {
 	using []string
 }
 
-func (j Join) table() {
-	//TODO implement me
-	panic("implement me")
-}
+func (Join) table() {}
 
 func (j Join) Join(right TableReference) *JoinBuilder {
 	return &JoinBuilder{
@@ -121,3 +116,77 @@ func (j *JoinBuilder) Using(cols ...string) Join {
 		using: cols,
 	}
 }
+
+type Subquery struct {
+	t       TableReference
+	builder QueryBuilder
+	columns []Selectable
+	alias   string
+}
+
+func (Subquery) table() {}
+
+func (Subquery) expr() {}
+
+func (s Subquery) tableAlias() string {
+	return s.alias
+}
+
+func (s Subquery) Join(right TableReference) *JoinBuilder {
+	return &JoinBuilder{
+		left:  s,
+		right: right,
+		typ:   "JOIN",
+	}
+}
+
+func (s Subquery) LeftJoin(right TableReference) *JoinBuilder {
+	return &JoinBuilder{
+		left:  s,
+		right: right,
+		typ:   "LEFT JOIN",
+	}
+}
+
+func (s Subquery) RightJoin(right TableReference) *JoinBuilder {
+	return &JoinBuilder{
+		left:  s,
+		right: right,
+		typ:   "RIGHT JOIN",
+	}
+}
+
+func Any(sub Subquery) SubqueryExpr {
+	return SubqueryExpr{
+		s:    sub,
+		pred: "ANY",
+	}
+}
+
+func All(sub Subquery) SubqueryExpr {
+	return SubqueryExpr{
+		s:    sub,
+		pred: "ALL",
+	}
+}
+
+func Some(sub Subquery) SubqueryExpr {
+	return SubqueryExpr{
+		s:    sub,
+		pred: "SOME",
+	}
+}
+
+func Exists(sub Subquery) Predicate {
+	return Predicate{
+		op:    opExists,
+		right: sub,
+	}
+}
+
+type SubqueryExpr struct {
+	s    Subquery
+	pred string
+}
+
+func (SubqueryExpr) expr() {}

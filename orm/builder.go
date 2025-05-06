@@ -72,6 +72,16 @@ func (b *builder) buildExpression(expr Expression) error {
 	case RawExpr:
 		b.sb.WriteString(exprTrans.raw)
 		b.addArgs(exprTrans.args...)
+	case Subquery:
+		if err := b.buildSubquery(exprTrans); err != nil {
+			return err
+		}
+	case SubqueryExpr:
+		b.sb.WriteString(exprTrans.pred)
+		b.sb.WriteByte(' ')
+		if err := b.buildSubquery(exprTrans.s); err != nil {
+			return err
+		}
 	default:
 		return errs.NewErrUnsupportedExpression(expr)
 	}
@@ -102,6 +112,20 @@ func (b *builder) buildColumn(c Column) error {
 		}
 		b.sb.WriteByte('.')
 		b.quote(fd.ColName)
+	case Join:
+		if b.buildColumn(Column{table: table.left, name: c.name}) != nil {
+			return b.buildColumn(Column{table: table.right, name: c.name})
+		}
+	case Subquery:
+		if len(table.columns) > 0 {
+			//FIXME
+			for _, col := range table.columns {
+				if colTrans, ok := col.(Column); ok && colTrans.name == c.name {
+					return b.buildColumn(colTrans)
+				}
+			}
+			return errs.NewErrUnknownField(c.name)
+		}
 	default:
 		return errs.NewErrUnsupportedTableReference(table)
 	}
@@ -113,6 +137,20 @@ func (b *builder) buildAggregate(a Aggregate) error {
 	b.sb.WriteByte('(')
 	if err := b.buildColumn(C(a.arg)); err != nil {
 		return err
+	}
+	b.sb.WriteByte(')')
+	return nil
+}
+
+func (b *builder) buildSubquery(s Subquery) error {
+	query, err := s.builder.Build()
+	if err != nil {
+		return err
+	}
+	b.sb.WriteByte('(')
+	b.sb.WriteString(query.SQL[:len(query.SQL)-1])
+	if len(query.Args) > 0 {
+		b.addArgs(query.Args)
 	}
 	b.sb.WriteByte(')')
 	return nil

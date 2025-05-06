@@ -1,5 +1,15 @@
 package orm
 
+var (
+	_ Expression = &Aggregate{}
+	_ Expression = &Column{}
+	_ Expression = &Predicate{}
+	_ Expression = &RawExpr{}
+	_ Expression = &value{}
+	_ Expression = &Subquery{}
+	_ Expression = &SubqueryExpr{}
+)
+
 // Expression tag interface,
 // which represents an expression
 type Expression interface {

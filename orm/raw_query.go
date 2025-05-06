@@ -5,10 +5,6 @@ import (
 	"database/sql"
 )
 
-var _ Querier[any] = &RawQuerier[any]{}
-
-var _ QueryBuilder = &RawQuerier[any]{}
-
 type RawQuerier[T any] struct {
 	core
 	sess Session

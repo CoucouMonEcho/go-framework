@@ -34,8 +34,6 @@ func (o *UpsertBuilder[T]) Update(assigns ...Assignable) *Inserter[T] {
 	return o.i
 }
 
-var _ Executor = &Inserter[any]{}
-
 type Inserter[T any] struct {
 	builder
 	table   string

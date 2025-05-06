@@ -1,41 +1,68 @@
 package orm
 
+import (
+	"context"
+	"database/sql"
+)
+
 type Deleter[T any] struct {
 	builder
 	table string
 
-	db *DB
+	sess Session
 
 	where []Predicate
 }
 
-func NewDeleter[T any](db *DB) *Deleter[T] {
+func (d *Deleter[T]) Exec(ctx context.Context) Result {
+	// initialize model
+	var err error
+	if d.model, err = d.r.Get(new(T)); err != nil {
+		return Result{err: err}
+	}
+	res := exec(ctx, d.sess, d.core, &QueryContext{
+		Type:    "DELETE",
+		Builder: d,
+		Model:   d.model,
+	})
+	if res.Result == nil {
+		return Result{err: res.Err}
+	}
+	return Result{
+		res: res.Result.(sql.Result),
+		err: res.Err,
+	}
+}
+
+func NewDeleter[T any](sess Session) *Deleter[T] {
+	c := sess.getCore()
 	return &Deleter[T]{
-		db: db,
+		builder: builder{
+			core:   c,
+			quoter: c.dialect.quoter(),
+		},
+		sess: sess,
 	}
 }
 
 func (d *Deleter[T]) Build() (*Query, error) {
 	var err error
-	d.model, err = d.db.r.Register(new(T))
-	if err != nil {
-		return nil, err
+	if d.model == nil {
+		if d.model, err = d.r.Get(new(T)); err != nil {
+			return nil, err
+		}
 	}
 
 	d.sb.WriteString("DELETE FROM ")
 
 	// table name
 	if d.table == "" {
-		d.sb.WriteByte('`')
-		d.sb.WriteString(d.model.TableName)
-		d.sb.WriteByte('`')
+		d.quote(d.model.TableName)
 	} else {
-		// d.sb.WriteByte('`')
 		d.sb.WriteString(d.table)
-		// d.sb.WriteByte('`')
 	}
 
-	// where condition
+	// where
 	if len(d.where) > 0 {
 		d.sb.WriteString(" WHERE ")
 		err = d.buildPredicates(d.where)

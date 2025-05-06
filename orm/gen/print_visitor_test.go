@@ -1,4 +1,4 @@
-package ast
+package gen
 
 import (
 	"github.com/stretchr/testify/require"
@@ -10,7 +10,7 @@ import (
 
 func TestPrintVisitor_Visit(t *testing.T) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "src.go", `package ast
+	f, err := parser.ParseFile(fset, "src.go", `package gen
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ import (
 type PrintVisitor struct {
 }
 
-func (p PrintVisitor) Visit(node ast.Node) (w ast.Visitor) {
+func (p PrintVisitor) Visit(node gen.Node) (w gen.Visitor) {
 	if node == nil {
 		fmt.Println(nil)
 		return p

@@ -7,12 +7,13 @@ package orm
 type op string
 
 const (
-	opEQ  op = "="
-	opLT  op = "<"
-	opGT  op = ">"
-	opNOT op = "NOT"
-	opAND op = "AND"
-	opOR  op = "OR"
+	opEQ     op = "="
+	opLT     op = "<"
+	opGT     op = ">"
+	opNOT    op = "NOT"
+	opAND    op = "AND"
+	opOR     op = "OR"
+	opExists op = "EXISTS"
 )
 
 func (o op) String() string {

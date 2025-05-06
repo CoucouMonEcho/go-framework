@@ -1,4 +1,4 @@
-package ast
+package gen
 
 import (
 	"fmt"

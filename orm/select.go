@@ -11,10 +11,6 @@ type Selectable interface {
 	selectable()
 }
 
-var _ Querier[any] = &Selector[any]{}
-
-var _ QueryBuilder = &Selector[any]{}
-
 type Selector[T any] struct {
 	builder
 	table   TableReference
@@ -182,6 +178,14 @@ func (b *builder) buildTable(table TableReference) error {
 			}
 			b.sb.WriteByte(')')
 		}
+	case Subquery:
+		if err := b.buildSubquery(tableTrans); err != nil {
+			return err
+		}
+		if tableTrans.alias != "" {
+			b.sb.WriteString(" AS ")
+			b.quote(tableTrans.alias)
+		}
 	case Table:
 		m, err := b.r.Get(tableTrans.entity)
 		if err != nil {
@@ -296,6 +300,18 @@ func (s *Selector[T]) Offset(offset int) *Selector[T] {
 func (s *Selector[T]) Limit(limit int) *Selector[T] {
 	s.limit = limit
 	return s
+}
+
+func (s *Selector[T]) AsSubquery(alias string) Subquery {
+	t := s.table
+	if t == nil {
+		t = TableOf(new(T))
+	}
+	return Subquery{
+		t:       t,
+		builder: s,
+		columns: s.columns,
+	}
 }
 
 func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
