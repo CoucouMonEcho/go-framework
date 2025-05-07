@@ -18,6 +18,85 @@ func (b *builder) quote(name string) {
 	b.sb.WriteByte(b.quoter)
 }
 
+func (b *builder) buildTable(table TableReference) error {
+	switch tableTrans := table.(type) {
+	case nil:
+		b.quote(b.model.TableName)
+	case Join:
+		// left
+		_, ok := tableTrans.left.(Join)
+		if ok {
+			b.sb.WriteByte('(')
+		}
+		if err := b.buildTable(tableTrans.left); err != nil {
+			return err
+		}
+		if ok {
+			b.sb.WriteByte(')')
+		}
+		// typ
+		if tableTrans.typ != "" {
+			if tableTrans.left != nil {
+				b.sb.WriteByte(' ')
+			}
+			b.sb.WriteString(tableTrans.typ)
+			b.sb.WriteByte(' ')
+		}
+		// right
+		_, ok = tableTrans.right.(Join)
+		if ok {
+			b.sb.WriteByte('(')
+		}
+		if err := b.buildTable(tableTrans.right); err != nil {
+			return err
+		}
+		if ok {
+			b.sb.WriteByte(')')
+		}
+		// on
+		if len(tableTrans.on) > 0 {
+			b.sb.WriteString(" ON ")
+			if err := b.buildPredicates(tableTrans.on); err != nil {
+				return err
+			}
+		}
+		// using
+		if len(tableTrans.using) > 0 {
+			b.sb.WriteString(" USING (")
+			for i, col := range tableTrans.using {
+				if i > 0 {
+					b.sb.WriteString(", ")
+				}
+				if err := b.buildColumn(C(col)); err != nil {
+					return err
+				}
+			}
+			b.sb.WriteByte(')')
+		}
+	case Subquery:
+		if err := b.buildSubquery(tableTrans); err != nil {
+			return err
+		}
+		if tableTrans.alias != "" {
+			b.sb.WriteString(" AS ")
+			b.quote(tableTrans.alias)
+		}
+	case Table:
+		m, err := b.r.Get(tableTrans.entity)
+		if err != nil {
+			return err
+		}
+		b.quote(m.TableName)
+		if tableTrans.alias != "" {
+			b.sb.WriteString(" AS ")
+			b.quote(tableTrans.alias)
+		}
+	default:
+		return errs.NewErrUnsupportedTableReference(table)
+	}
+	return nil
+}
+
 func (b *builder) buildPredicates(ps []Predicate) error {
 	p := ps[0]
 	for i := 1; i < len(ps); i++ {
@@ -117,15 +196,32 @@ func (b *builder) buildColumn(c Column) error {
 			return b.buildColumn(Column{table: table.right, name: c.name})
 		}
 	case Subquery:
-		if len(table.columns) > 0 {
-			//FIXME
-			for _, col := range table.columns {
-				if colTrans, ok := col.(Column); ok && colTrans.name == c.name {
-					return b.buildColumn(colTrans)
-				}
-			}
+		//TODO test it when i truly need subquery...
+		if len(table.columns) < 1 {
 			return errs.NewErrUnknownField(c.name)
 		}
+		if table.alias != "" {
+			return errs.ErrIllegalTableName
+		}
+		for _, col := range table.columns {
+			switch colTrans := col.(type) {
+			case Column:
+				if colTrans.name == c.name || colTrans.alias == c.name {
+					b.quote(table.alias)
+					b.sb.WriteByte('.')
+					return b.buildColumn(colTrans)
+				}
+			case Aggregate:
+				if colTrans.alias == c.name {
+					b.quote(table.alias)
+					b.sb.WriteByte('.')
+					b.quote(colTrans.alias)
+				}
+			default:
+				return errs.NewErrUnknownField(c.name)
+			}
+		}
+		return errs.NewErrUnknownField(c.name)
 	default:
 		return errs.NewErrUnsupportedTableReference(table)
 	}

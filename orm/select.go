@@ -1,7 +1,6 @@
 package orm
 
 import (
-	"code-practise/orm/internal/errs"
 	"context"
 )
 
@@ -121,85 +120,6 @@ func (s *Selector[T]) Build() (*Query, error) {
 		SQL:  s.sb.String(),
 		Args: s.args,
 	}, nil
-}
-
-func (b *builder) buildTable(table TableReference) error {
-	switch tableTrans := table.(type) {
-	case nil:
-		b.quote(b.model.TableName)
-	case Join:
-		// left
-		_, ok := tableTrans.left.(Join)
-		if ok {
-			b.sb.WriteByte('(')
-		}
-		if err := b.buildTable(tableTrans.left); err != nil {
-			return err
-		}
-		if ok {
-			b.sb.WriteByte(')')
-		}
-		// typ
-		if tableTrans.typ != "" {
-			if tableTrans.left != nil {
-				b.sb.WriteByte(' ')
-			}
-			b.sb.WriteString(tableTrans.typ)
-			b.sb.WriteByte(' ')
-		}
-		// right
-		_, ok = tableTrans.right.(Join)
-		if ok {
-			b.sb.WriteByte('(')
-		}
-		if err := b.buildTable(tableTrans.right); err != nil {
-			return err
-		}
-		if ok {
-			b.sb.WriteByte(')')
-		}
-		// on
-		if len(tableTrans.on) > 0 {
-			b.sb.WriteString(" ON ")
-			if err := b.buildPredicates(tableTrans.on); err != nil {
-				return err
-			}
-		}
-		// using
-		if len(tableTrans.using) > 0 {
-			b.sb.WriteString(" USING (")
-			for i, col := range tableTrans.using {
-				if i > 0 {
-					b.sb.WriteString(", ")
-				}
-				if err := b.buildColumn(C(col)); err != nil {
-					return err
-				}
-			}
-			b.sb.WriteByte(')')
-		}
-	case Subquery:
-		if err := b.buildSubquery(tableTrans); err != nil {
-			return err
-		}
-		if tableTrans.alias != "" {
-			b.sb.WriteString(" AS ")
-			b.quote(tableTrans.alias)
-		}
-	case Table:
-		m, err := b.r.Get(tableTrans.entity)
-		if err != nil {
-			return err
-		}
-		b.quote(m.TableName)
-		if tableTrans.alias != "" {
-			b.sb.WriteString(" AS ")
-			b.quote(tableTrans.alias)
-		}
-	default:
-		return errs.NewErrUnsupportedTableReference(table)
-	}
-	return nil
 }
 
 func (s *Selector[T]) buildColumns() error {
