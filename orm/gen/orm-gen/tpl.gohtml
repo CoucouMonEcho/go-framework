@@ -12,7 +12,7 @@ const (
 )
 {{range $jdx, $field := $type.Fields}}{{range $kdx, $op := $ops}}
 func {{$type.Name}}{{$field.Name}}{{$op}}(val {{$field.Type}}) orm.Predicate {
-	return orm.C("{{$field.Name}}").{{$op}}(val)
+	return orm.C({{$type.Name}}{{$field.Name}}).{{$op}}(val)
 }
 {{end -}}{{end -}}
 {{end -}}
