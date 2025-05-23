@@ -66,7 +66,7 @@ func (s *Selector[T]) Build() (*Query, error) {
 		}
 	}
 
-	// order by
+	// group by
 	if len(s.groupBy) > 0 {
 		s.sb.WriteString(" GROUP BY ")
 		for i, col := range s.groupBy {
