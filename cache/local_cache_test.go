@@ -76,3 +76,9 @@ func TestBuildInMapCache_Loop(t *testing.T) {
 	require.False(t, ok)
 	assert.Equal(t, 1, cnt)
 }
+
+func TestBuildInMapCache_WriteBack(t *testing.T) {
+	NewBuildInMapCache(time.Second, BuildInMapCacheWithEvictedCallback(func(k string, v any) {
+		// orm update
+	}))
+}

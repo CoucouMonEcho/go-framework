@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	redis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
+// go install github.com/golang/mock/mockgen@v1.6.0
 // mockgen -destination=cache/mocks/mock_redis_cmdable.gen.go -package=mocks github.com/redis/go-redis/v9 Cmdable
 
 var (
-	errFailedToSetCache = errors.New("failed to set cache")
+	errFailedToSetCache = errors.New("cache: failed to set cache")
 )
 
 type RedisCache struct {
@@ -42,4 +43,8 @@ func (r *RedisCache) Get(ctx context.Context, k string) (any, error) {
 func (r *RedisCache) Del(ctx context.Context, k string) error {
 	_, err := r.client.Del(ctx, k).Result()
 	return err
+}
+
+func (r *RedisCache) LoadAndDelete(ctx context.Context, k string) (any, error) {
+	return r.client.GetDel(ctx, k).Result()
 }
