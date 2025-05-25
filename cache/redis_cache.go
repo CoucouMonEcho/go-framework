@@ -48,3 +48,8 @@ func (r *RedisCache) Del(ctx context.Context, k string) error {
 func (r *RedisCache) LoadAndDelete(ctx context.Context, k string) (any, error) {
 	return r.client.GetDel(ctx, k).Result()
 }
+
+func (r *RedisCache) OnEvicted(f func(k string, v any)) {
+	//TODO implement me
+	panic("implement me")
+}

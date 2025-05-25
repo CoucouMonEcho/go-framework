@@ -11,4 +11,5 @@ type Cache interface {
 	Del(ctx context.Context, k string) error
 
 	LoadAndDelete(ctx context.Context, k string) (any, error)
+	OnEvicted(func(k string, v any))
 }

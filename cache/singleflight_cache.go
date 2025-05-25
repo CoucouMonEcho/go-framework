@@ -12,7 +12,7 @@ type SingleflightCache struct {
 
 func NewSingleflightCache(cache Cache,
 	loadFunc func(ctx context.Context, k string) (any, error),
-	expiration time.Duration) Cache {
+	expire time.Duration) Cache {
 	g := &singleflight.Group{}
 	return &SingleflightCache{
 		ReadThroughCache: ReadThroughCache{
@@ -23,7 +23,7 @@ func NewSingleflightCache(cache Cache,
 				})
 				return v, err
 			},
-			Expiration: expiration,
+			Expire: expire,
 		},
 	}
 }

@@ -137,13 +137,13 @@ func initFigureStructure(words []string, nodeFigure *[][]*node) []*node {
 func getHeights(curr **int, root *node, parentIndex map[int]struct{}, slices [][]int, idxMap map[int]int, allIndex map[int]struct{}) (heights []*height) {
 	x := root.height
 	slices = append(slices, make([]int, 0))
-	for idx, _ := range parentIndex {
+	for idx := range parentIndex {
 		if _, ok := root.index[idx]; ok {
 			continue
 		}
 		slices[x] = append(slices[x], -idx)
 	}
-	for idx, _ := range root.index {
+	for idx := range root.index {
 		if _, ok := parentIndex[idx]; ok {
 			continue
 		}
@@ -152,7 +152,7 @@ func getHeights(curr **int, root *node, parentIndex map[int]struct{}, slices [][
 
 	// all contains flag
 	contains := true
-	for idx, _ := range allIndex {
+	for idx := range allIndex {
 		_, contains = idxMap[idx]
 		if !contains {
 			tp := &idx

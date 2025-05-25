@@ -136,6 +136,11 @@ func (b *BuildInMapCache) Close() error {
 	return nil
 }
 
+func (b *BuildInMapCache) OnEvicted(f func(k string, v any)) {
+	//TODO implement me
+	panic("implement me")
+}
+
 type item struct {
 	v  any
 	dl time.Time

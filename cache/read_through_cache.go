@@ -14,21 +14,21 @@ var (
 
 type ReadThroughCache struct {
 	Cache
-	LoadFunc   func(ctx context.Context, k string) (any, error)
-	Expiration time.Duration
-	g          singleflight.Group
+	LoadFunc func(ctx context.Context, k string) (any, error)
+	Expire   time.Duration
+	g        singleflight.Group
 }
 
 // Get single flight
 func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 	v, err := r.Cache.Get(ctx, k)
-	if err == errKeyNotFound {
+	if errors.Is(err, errKeyNotFound) {
 		v, err, _ = r.g.Do(k, func() (any, error) {
 			val, er := r.LoadFunc(ctx, k)
 			if er != nil {
 				return v, er
 			}
-			if er = r.Cache.Set(ctx, k, val, r.Expiration); err != nil {
+			if er = r.Cache.Set(ctx, k, val, r.Expire); err != nil {
 				return nil, fmt.Errorf("%w: %s", ErrFailedToRefreshCache, err)
 			}
 			return val, err
@@ -40,13 +40,13 @@ func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 // Get semi asynchronous
 //func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 //	v, err := r.Cache.Get(ctx, k)
-//	if err == errKeyNotFound {
+//	if errors.Is(err, errKeyNotFound) {
 //		v, err = r.LoadFunc(ctx, k)
 //		if err != nil {
 //			return v, err
 //		}
 //		go func() {
-//			_ = r.Cache.Set(ctx, k, v, r.Expiration)
+//			_ = r.Cache.Set(ctx, k, v, r.Expire)
 //		}()
 //	}
 //	return v, err
@@ -55,13 +55,13 @@ func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 // Get asynchronous
 //func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 //	v, err := r.Cache.Get(ctx, k)
-//	if err == errKeyNotFound {
+//	if errors.Is(err, errKeyNotFound) {
 //		go func() {
 //			v, err = r.LoadFunc(ctx, k)
 //			if err != nil {
 //				return
 //			}
-//			_ = r.Cache.Set(ctx, k, v, r.Expiration)
+//			_ = r.Cache.Set(ctx, k, v, r.Expire)
 //		}()
 //	}
 //	return v, err
@@ -70,12 +70,12 @@ func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 // Get synchronous
 //func (r *ReadThroughCache) Get(ctx context.Context, k string) (any, error) {
 //	v, err := r.Cache.Get(ctx, k)
-//	if err == errKeyNotFound {
+//	if errors.Is(err, errKeyNotFound) {
 //		v, err = r.LoadFunc(ctx, k)
 //		if err != nil {
 //			return v, err
 //		}
-//		if err = r.Cache.Set(ctx, k, v, r.Expiration); err != nil {
+//		if err = r.Cache.Set(ctx, k, v, r.Expire); err != nil {
 //			return nil, fmt.Errorf("%w: %s", ErrFailedToRefreshCache, err)
 //		}
 //	}

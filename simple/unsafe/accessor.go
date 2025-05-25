@@ -70,7 +70,7 @@ func (a *UnsafeAccessor) SetField(field string, val any) error {
 
 type FieldMeta struct {
 	// in fact, offset is only a number
-	// uintptr is usually only used when performing address operations.
+	// uintptr is usually only used when performing address operations
 	offset uintptr
 
 	typ reflect.Type

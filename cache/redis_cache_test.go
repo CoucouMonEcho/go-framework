@@ -19,9 +19,9 @@ func TestRedisCache_Set(t *testing.T) {
 
 		mock func(ctrl *gomock.Controller) redis.Cmdable
 
-		key        string
-		value      string
-		expiration time.Duration
+		key    string
+		value  string
+		expire time.Duration
 
 		wantErr error
 	}{
@@ -36,9 +36,9 @@ func TestRedisCache_Set(t *testing.T) {
 					Return(status)
 				return cmd
 			},
-			key:        "key1",
-			value:      "value1",
-			expiration: time.Second,
+			key:    "key1",
+			value:  "value1",
+			expire: time.Second,
 		},
 		{
 			name: "timeout",
@@ -51,10 +51,10 @@ func TestRedisCache_Set(t *testing.T) {
 					Return(status)
 				return cmd
 			},
-			key:        "key1",
-			value:      "value1",
-			expiration: time.Second,
-			wantErr:    context.DeadlineExceeded,
+			key:     "key1",
+			value:   "value1",
+			expire:  time.Second,
+			wantErr: context.DeadlineExceeded,
 		},
 		{
 			name: "unexpected msg",
@@ -67,10 +67,10 @@ func TestRedisCache_Set(t *testing.T) {
 					Return(status)
 				return cmd
 			},
-			key:        "key1",
-			value:      "value1",
-			expiration: time.Second,
-			wantErr:    fmt.Errorf("%w, %s", errFailedToSetCache, "unexpected msg"),
+			key:     "key1",
+			value:   "value1",
+			expire:  time.Second,
+			wantErr: fmt.Errorf("%w, %s", errFailedToSetCache, "unexpected msg"),
 		},
 	}
 
@@ -79,7 +79,7 @@ func TestRedisCache_Set(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			c := NewRedisCache(tc.mock(ctrl))
-			err := c.Set(context.Background(), tc.key, tc.value, tc.expiration)
+			err := c.Set(context.Background(), tc.key, tc.value, tc.expire)
 			assert.Equal(t, tc.wantErr, err)
 		})
 	}

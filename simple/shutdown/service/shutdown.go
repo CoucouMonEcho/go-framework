@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -51,7 +52,7 @@ func (app *App) Run() {
 		srv := server
 		go func() {
 			if err := srv.Start(); err != nil {
-				if err == http.ErrServerClosed {
+				if errors.Is(err, http.ErrServerClosed) {
 					log.Printf("server %s has stopped\n", srv.name)
 				} else {
 					log.Printf("server %s exit unexpectedly\n", srv.name)

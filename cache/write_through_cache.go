@@ -7,15 +7,15 @@ import (
 
 type WriteThroughCache struct {
 	Cache
-	StoreFunc  func(ctx context.Context, k string, v any) error
-	Expiration time.Duration
+	StoreFunc func(ctx context.Context, k string, v any) error
+	Expire    time.Duration
 }
 
 // Set semi asynchronous
 func (w *WriteThroughCache) Set(ctx context.Context, k string, v any) error {
 	err := w.StoreFunc(ctx, k, v)
 	go func() {
-		_ = w.Cache.Set(ctx, k, v, w.Expiration)
+		_ = w.Cache.Set(ctx, k, v, w.Expire)
 	}()
 	return err
 }
@@ -24,7 +24,7 @@ func (w *WriteThroughCache) Set(ctx context.Context, k string, v any) error {
 //func (w *WriteThroughCache) Set(ctx context.Context, k string, v any) error {
 //	go func() {
 //		_ = w.StoreFunc(ctx, k, v)
-//		_ = w.Cache.Set(ctx, k, v, w.Expiration)
+//		_ = w.Cache.Set(ctx, k, v, w.Expire)
 //	}()
 //	return nil
 //}
@@ -36,7 +36,7 @@ func (w *WriteThroughCache) Set(ctx context.Context, k string, v any) error {
 //		return err
 //	}
 //	go func() {
-//		_ = w.Cache.Set(ctx, k, v, w.Expiration)
+//		_ = w.Cache.Set(ctx, k, v, w.Expire)
 //	}()
 //	return err
 //}

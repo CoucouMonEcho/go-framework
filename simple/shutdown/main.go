@@ -1,7 +1,7 @@
 package main
 
 import (
-	"code-practise/shutdown/service"
+	"code-practise/simple/shutdown/service"
 	"context"
 	"log"
 	"net/http"
