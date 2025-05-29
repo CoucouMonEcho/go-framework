@@ -10,7 +10,7 @@ import (
 )
 
 func Test_handleConn(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name string
 
 		mock func(ctrl *gomock.Controller) net.Conn
@@ -29,12 +29,12 @@ func Test_handleConn(t *testing.T) {
 			wantErr: errors.New("micro: read too many bytes"),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			err := handleConn(tt.mock(ctrl))
-			assert.Equal(t, err, tt.wantErr)
+			err := handleConn(tc.mock(ctrl))
+			assert.Equal(t, err, tc.wantErr)
 		})
 	}
 }

@@ -11,7 +11,9 @@ import (
 func TestDB_Tx(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 

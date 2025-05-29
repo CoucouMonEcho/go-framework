@@ -34,7 +34,7 @@ func Test_parseModel(t *testing.T) {
 			Offset:  32,
 		},
 	}
-	tests := []struct {
+	testCases := []struct {
 		name   string
 		entity any
 
@@ -56,30 +56,30 @@ func Test_parseModel(t *testing.T) {
 		},
 	}
 	r := &registry{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.Register(tt.entity)
-			assert.Equal(t, tt.wantErr, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := r.Register(tc.entity)
+			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
 			}
 
 			fieldMap := make(map[string]*Field)
 			columnMap := make(map[string]*Field)
-			for _, field := range tt.want.Fields {
+			for _, field := range tc.want.Fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.ColName] = field
 			}
-			tt.want.FieldMap = fieldMap
-			tt.want.ColumnMap = columnMap
+			tc.want.FieldMap = fieldMap
+			tc.want.ColumnMap = columnMap
 
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
 
 func Test_registryGet(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		name   string
 		entity any
 		opts   []Option
@@ -224,29 +224,29 @@ func Test_registryGet(t *testing.T) {
 		},
 	}
 	r := NewRegistry()
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			//got, err := r.Get(tt.entity)
-			got, err := r.Register(tt.entity, tt.opts...)
-			assert.Equal(t, tt.wantErr, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			//got, err := r.Get(tc.entity)
+			got, err := r.Register(tc.entity, tc.opts...)
+			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
 			}
 
 			fieldMap := make(map[string]*Field)
 			columnMap := make(map[string]*Field)
-			for _, field := range tt.want.Fields {
+			for _, field := range tc.want.Fields {
 				fieldMap[field.GoName] = field
 				columnMap[field.ColName] = field
 			}
-			tt.want.FieldMap = fieldMap
-			tt.want.ColumnMap = columnMap
+			tc.want.FieldMap = fieldMap
+			tc.want.ColumnMap = columnMap
 
-			assert.Equal(t, tt.want, got)
-			typ := reflect.TypeOf(tt.entity)
+			assert.Equal(t, tc.want, got)
+			typ := reflect.TypeOf(tc.entity)
 			cache, ok := r.(*registry).models.Load(typ)
 			assert.True(t, ok)
-			assert.Equal(t, tt.want, cache)
+			assert.Equal(t, tc.want, cache)
 		})
 	}
 }
