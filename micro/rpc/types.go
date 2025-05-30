@@ -15,11 +15,11 @@ type Proxy interface {
 type Request struct {
 	ServiceName string
 	MethodName  string
-	Arg         any
+	//Arg         any
+	// Arg  use any can not confirm type
+	Arg []byte
 }
 
 type Response struct {
-	ServiceName string
-	MethodName  string
-	Arg         any
+	Data []byte
 }

@@ -1,12 +1,13 @@
-package net
+package pool
 
 import (
 	"context"
 	"fmt"
-	"net"
 	"sync"
 	"time"
 )
+
+type Conn any
 
 type Pool struct {
 	idlesConns chan *idlesConn
@@ -19,21 +20,20 @@ type Pool struct {
 
 	maxIdleTime time.Duration
 
-	factory func() (net.Conn, error)
+	factory func() (Conn, error)
+	close   func(conn any) error
 
 	mutex sync.RWMutex
 }
 
-func NewPool(initCnt, maxIdleCnt, maxCnt int,
-	maxIdleTime time.Duration,
-	factory func() (net.Conn, error)) (*Pool, error) {
+func NewPool(config *Config) (*Pool, error) {
 
-	if initCnt > maxIdleCnt {
+	if config.InitialCap > config.MaxIdle {
 		return nil, fmt.Errorf("micro: initCnt greater than maxIdleCnt")
 	}
-	idlesConns := make(chan *idlesConn, maxIdleCnt)
-	for _ = range initCnt {
-		conn, err := factory()
+	idlesConns := make(chan *idlesConn, config.MaxIdle)
+	for _ = range config.InitialCap {
+		conn, err := config.Factory()
 		if err != nil {
 			return nil, err
 		}
@@ -45,14 +45,17 @@ func NewPool(initCnt, maxIdleCnt, maxCnt int,
 
 	res := &Pool{
 		idlesConns:  idlesConns,
-		maxCnt:      maxCnt,
-		maxIdleTime: maxIdleTime,
-		factory:     factory,
+		maxCnt:      config.MaxCap,
+		maxIdleTime: config.IdleTimeout,
+		factory: func() (Conn, error) {
+			return config.Factory()
+		},
+		close: config.Close,
 	}
 	return res, nil
 }
 
-func (p *Pool) Get(ctx context.Context) (net.Conn, error) {
+func (p *Pool) Get(ctx context.Context) (Conn, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -64,14 +67,14 @@ func (p *Pool) Get(ctx context.Context) (net.Conn, error) {
 		case ic := <-p.idlesConns:
 			// idles conn
 			if ic.lastActivityTime.Add(p.maxIdleTime).Before(time.Now()) {
-				_ = ic.c.Close()
+				_ = p.close(ic.c)
 				continue
 			}
 			return ic.c, nil
 		default:
 			p.mutex.Lock()
 			if p.cnt >= p.maxCnt {
-				req := connReq{make(chan net.Conn, 1)}
+				req := connReq{make(chan Conn, 1)}
 				p.reqQueue = append(p.reqQueue, req)
 				p.mutex.Unlock()
 				select {
@@ -98,7 +101,7 @@ func (p *Pool) Get(ctx context.Context) (net.Conn, error) {
 	}
 }
 
-func (p *Pool) Put(ctx context.Context, c net.Conn) error {
+func (p *Pool) Put(ctx context.Context, c Conn) error {
 	p.mutex.Lock()
 	if ql := len(p.reqQueue); ql > 0 {
 		req := p.reqQueue[ql-1]
@@ -114,7 +117,7 @@ func (p *Pool) Put(ctx context.Context, c net.Conn) error {
 	select {
 	case p.idlesConns <- ic:
 	default:
-		_ = c.Close()
+		_ = p.close(c)
 		//p.mutex.Lock()
 		p.cnt--
 		//p.mutex.Unlock()
@@ -122,11 +125,20 @@ func (p *Pool) Put(ctx context.Context, c net.Conn) error {
 	return nil
 }
 
+type Config struct {
+	InitialCap  int
+	MaxCap      int
+	MaxIdle     int
+	IdleTimeout time.Duration
+	Factory     func() (any, error)
+	Close       func(conn any) error
+}
+
 type idlesConn struct {
-	c                net.Conn
+	c                Conn
 	lastActivityTime time.Time
 }
 
 type connReq struct {
-	connChan chan net.Conn
+	connChan chan Conn
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -28,14 +29,14 @@ func Test_setFuncField(t *testing.T) {
 					Invoke(gomock.Any(), &Request{
 						ServiceName: "test-service",
 						MethodName:  "GetById",
-						Arg: &GetByIdReq{
-							Id: 123,
-						},
+						Arg:         []byte(`{"Id":123}`),
 					}).
-					Return(&Response{}, nil)
+					Return(&Response{
+						Data: []byte(`{"Msg":"hello, world"}`),
+					}, nil)
 				return p
 			},
-			want: (*GetByIdResp)(nil),
+			want: &GetByIdResp{Msg: "hello, world"},
 		},
 		{
 			name:    "nil",
@@ -53,12 +54,14 @@ func Test_setFuncField(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			err := setFuncField(tc.service, tc.mock(ctrl))
+			mock := tc.mock(ctrl)
+			err := setFuncField(tc.service, mock)
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
 			}
 			resp, err := tc.service.(*TestService).GetById(context.Background(), &GetByIdReq{Id: 123})
+			require.NoError(t, err)
 			assert.Equal(t, tc.want, resp)
 		})
 	}
@@ -77,4 +80,5 @@ type GetByIdReq struct {
 }
 
 type GetByIdResp struct {
+	Msg string
 }

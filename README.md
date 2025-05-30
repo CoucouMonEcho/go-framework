@@ -7,8 +7,8 @@
 ### 1.1. Router路由
 
 - [x] 抽象`Server`接口，支持`HTTPServer`实现；
-- [x] 以`/`作为分割符构造路由树，支持静态匹配[^1]；
-- [x] 支持不同节点类型，实现高级路由，包括`/*`通配符匹配、`/:id`路径参数。
+- [x] 分割`/`构造路由树，支持静态匹配[^1]；
+- [x] 支持不同节点类型，实现高级路由：`/*`通配符匹配、`/:id`路径参数。
 
   [^1]: Gin框架使用了前缀树，查找速度快；但代码过于复杂、因此不考虑。
 
@@ -18,8 +18,6 @@
 - [x] 存储url参数、路径参数、请求体、表单参数；
 - [x] 封装`StringValue`，支持返回值类型转化语法糖。
 
----
-
   <details><summary>示例代码</summary>
 
   ```
@@ -27,8 +25,6 @@
   ```
 
   </details>
-
----
 
 ### 1.3. Middleware中间件
 
@@ -39,7 +35,7 @@
 - [x] `Errhandle`返回错误页面；
 - [x] `Recover`支持从错误中恢复。
 
-  [^2]: 实现方法次啊用匹配路由后二次查找Middleware，效率较差；提前将Middleware部署在路由树中性能更好，但会引入大量复杂代码。
+  [^2]: 匹配路由二次查找Middleware，效率较差；若提前将Middleware部署在路由树中性能更好，但会额外引入大量复杂代码。
 
 ### 1.4. Template页面渲染[^3]
 
@@ -70,23 +66,19 @@
 - [x] `Querier`抽象用于`SELECT`语句，`Executor`抽象用于`INSERT`、`UPDATE`、`INSERT`语句；
 - [x] `Expression`是所有不同类型SQL部分拼接的标记接口；
 
----
-
   <details><summary>示例代码</summary>
 
-  ```
+  ```go
 	_ Expression = &Aggregate{}     // 内置函数
-	_ Expression = &Column{}        // 列名
+	_ Expression = &Column{}        // 列
 	_ Expression = &Predicate{}     // 查询条件
 	_ Expression = &RawExpr{}       // 自定义语句
 	_ Expression = &value{}         // 具体值
 	_ Expression = &Subquery{}      // 子查询
-	_ Expression = &SubqueryExpr{}  // 子查询
+	_ Expression = &SubqueryExpr{}  // 子查询表达式
   ```
 
   </details>
-
----
 
 - [x] 支持基础的DML语句和`WHERE`、`FROM`等关键字以及`NOT`等运算符。
 
@@ -102,18 +94,14 @@
 
 - [x] 支持聚合函数、别名、原生表达式。
 
----
-
   <details><summary>示例代码</summary>
 
-  ```
+  ```go
   NewSelector[TestModel](db)).Select(Raw("COUNT(DISTINCT `first_name`)").As("name"), Max("Age").As("max"))
       .Where(C("Id").Eq(Raw("`age` + ?", 1).AsPredicate())
   ```
 
   </details>
-
----
 
 ### 2.4. UPSERT实现
 
@@ -121,11 +109,9 @@
 - [x] 替换所有反引号、提供公共方法`buildUpsert`，实现不同数据库下的`upsert`语句；
 - [x] `UpsertBuilder`作为`Inserter`的中间链式调用，提供专属方法`Update`。
 
----
-
   <details><summary>示例代码</summary>
 
-  ```
+  ```go
   NewInserter[TestModel](db).Values(&TestModel{
                   Id:        12,
                   FirstName: "Tom",
@@ -138,17 +124,13 @@
 
   </details>
 
----
-
 ### 2.5. Transaction事务
 
 - [x] 抽象`Session`会话，将原有的`DB`作为实现，增加`Tx`实现，封装`DoTx`闭包方法。
 
----
-
   <details><summary>示例代码</summary>
 
-  ```
+  ```go
   err := db.DoTx(context.Background(), func(ctx context.Context, tx *Tx) error {
           // do something
           return nil
@@ -156,8 +138,6 @@
   ```
 
   </details>
-
----
 
 ### 2.6. Middleware中间件
 
@@ -172,13 +152,51 @@
 
 - [x] 支持`JOIN`查询。
 
-### 2.8. AST抽象语法树与模板代码
+  <details><summary>示例代码</summary>
 
-- [x] 使用AST生成脚手架代码。
+  ```go
+  t1 := TableOf(&Order{}).As("t1")
+  t2 := TableOf(&OrderDetail{}).As("t2")
+  t3 := t1.Join(t2).On(t1.C("Id").Eq(t2.C("OrderId")))
+  t4 := TableOf(&Item{}).As("t4")
+  t5 := t4.Join(t3).On(t2.C("ItemId").Eq(t4.C("Id")))
+  s := NewSelector[Order](db).From(t5)
+  ```
+
+  </details>
+
+### 2.8. AST生成模板代码
+
+- [x] 使用AST抽象语法树与模板引擎、生成脚手架代码。
+
+  <details><summary>示例代码</summary>
+
+  ```go
+  package testdata
+  
+  import (
+      "code-practise/orm"
+      "database/sql"
+  )
+  
+  const (
+      UserName     = "Name"
+      UserAge      = "Age"
+      UserNickName = "NickName"
+      UserPicture  = "Picture"
+  )
+  
+  func UserNameLt(val string) orm.Predicate {
+      return orm.C(UserName).Lt(val)
+  }
+  ...
+  ```
+
+  </details>
 
 ### 2.9. Subquery子查询
 
-- [x] 实现基础子查询，复杂查询应使用`RawQuery`。
+- [x] 实现嵌套子查询，但编写复杂查询语句时更建议使用`RawQuery`。
 
 ---
 
@@ -198,9 +216,9 @@
 
 ### 4.1. Pool连接池
 
-### 4.2. RPC协议设计实现
+### 4.2. RPC协议
 
-### 4.3. Etcd注册与发现
+### 4.3. Etcd注册发现
 
 ### 4.4. 负载均衡
 
