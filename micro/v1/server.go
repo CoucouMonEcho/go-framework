@@ -1,7 +1,6 @@
-package rpc
+package v1
 
 import (
-	"code-practise/micro/rpc/message"
 	"context"
 	"encoding/json"
 	"errors"
@@ -52,7 +51,7 @@ func (s *Server) handleConn(conn net.Conn) error {
 			return err
 		}
 
-		req := &message.Request{}
+		req := &Request{}
 		err = json.Unmarshal(reqBs, req)
 		if err != nil {
 			return err
@@ -70,17 +69,17 @@ func (s *Server) handleConn(conn net.Conn) error {
 	}
 }
 
-func (s *Server) Invoke(ctx context.Context, req *message.Request) (*message.Response, error) {
+func (s *Server) Invoke(ctx context.Context, req *Request) (*Response, error) {
 	stub, ok := s.services[req.ServiceName]
 	if !ok {
 		return nil, errors.New("rpc: service not found")
 	}
 	// service
-	data, err := stub.invoke(ctx, req.MethodName, req.Data)
+	data, err := stub.invoke(ctx, req.MethodName, req.Arg)
 	if err != nil {
 		return nil, err
 	}
-	return &message.Response{
+	return &Response{
 		Data: data,
 	}, nil
 }

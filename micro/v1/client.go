@@ -1,8 +1,7 @@
-package rpc
+package v1
 
 import (
 	"code-practise/micro/pool"
-	"code-practise/micro/rpc/message"
 	"context"
 	"encoding/json"
 	"errors"
@@ -46,10 +45,10 @@ func setFuncField(service Service, p Proxy) error {
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
-				req := &message.Request{
+				req := &Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
-					Data:        reqData,
+					Arg:         reqData,
 				}
 				resp, err := p.Invoke(ctx, req)
 				err = json.Unmarshal(resp.Data, retVal.Interface())
@@ -91,7 +90,7 @@ func NewClient(addr string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Invoke(ctx context.Context, req *message.Request) (*message.Response, error) {
+func (c *Client) Invoke(ctx context.Context, req *Request) (*Response, error) {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -100,7 +99,7 @@ func (c *Client) Invoke(ctx context.Context, req *message.Request) (*message.Res
 	if err != nil {
 		return nil, err
 	}
-	return &message.Response{
+	return &Response{
 		Data: resp,
 	}, nil
 }

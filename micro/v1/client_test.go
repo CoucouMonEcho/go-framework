@@ -1,7 +1,6 @@
-package rpc
+package v1
 
 import (
-	"code-practise/micro/rpc/message"
 	"context"
 	"errors"
 	"github.com/golang/mock/gomock"
@@ -27,12 +26,12 @@ func Test_setFuncField(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) Proxy {
 				p := NewMockProxy(ctrl)
 				p.EXPECT().
-					Invoke(gomock.Any(), &message.Request{
+					Invoke(gomock.Any(), &Request{
 						ServiceName: "test-service",
 						MethodName:  "GetById",
-						Data:        []byte(`{"Id":123}`),
+						Arg:         []byte(`{"Id":123}`),
 					}).
-					Return(&message.Response{
+					Return(&Response{
 						Data: []byte(`{"Msg":"hello, world"}`),
 					}, nil)
 				return p
