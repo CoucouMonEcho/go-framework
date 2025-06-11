@@ -145,3 +145,14 @@ func DecodeReq(data []byte) *Request {
 
 	return req
 }
+
+func (req *Request) CalculateHeaderLength() {
+	req.HeadLength = 15 + uint32(len(req.ServiceName)) + 1 + uint32(len(req.MethodName)) + 1
+	for k, v := range req.Meta {
+		req.HeadLength += uint32(len(k) + 1 + len(v) + 1)
+	}
+}
+
+func (req *Request) CalculateBodyLength() {
+	req.BodyLength = uint32(len(req.Data))
+}

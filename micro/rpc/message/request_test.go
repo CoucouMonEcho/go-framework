@@ -44,7 +44,6 @@ func TestEncodeDecodeRequest(t *testing.T) {
 			},
 		},
 		{
-			//FIXME
 			name: "no data",
 			req: &Request{
 				MessageId:   123,
@@ -79,8 +78,8 @@ func TestEncodeDecodeRequest(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.req.calculateHeaderLength()
-			tc.req.calculateBodyLength()
+			tc.req.CalculateHeaderLength()
+			tc.req.CalculateBodyLength()
 
 			data := EncodeReq(tc.req)
 			req := DecodeReq(data)
@@ -88,15 +87,4 @@ func TestEncodeDecodeRequest(t *testing.T) {
 
 		})
 	}
-}
-
-func (req *Request) calculateHeaderLength() {
-	req.HeadLength = 15 + uint32(len(req.ServiceName)) + 1 + uint32(len(req.MethodName)) + 1
-	for k, v := range req.Meta {
-		req.HeadLength += uint32(len(k) + 1 + len(v) + 1)
-	}
-}
-
-func (req *Request) calculateBodyLength() {
-	req.BodyLength = uint32(len(req.Data))
 }

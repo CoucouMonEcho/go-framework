@@ -52,18 +52,20 @@ func (s *Server) handleConn(conn net.Conn) error {
 			return err
 		}
 
-		req := &message.Request{}
-		err = json.Unmarshal(reqBs, req)
+		req := message.DecodeReq(reqBs)
 		if err != nil {
 			return err
 		}
 		resp, err := s.Invoke(context.Background(), req)
 		if err != nil {
 			// business err
+			resp.Error = []byte(err.Error())
 		}
+		resp.CalculateHeaderLength()
+		resp.CalculateBodyLength()
 
 		// write message body
-		_, err = conn.Write(EncodeMsg(resp.Data))
+		_, err = conn.Write(message.EncodeResp(resp))
 		if err != nil {
 			return err
 		}
@@ -72,17 +74,22 @@ func (s *Server) handleConn(conn net.Conn) error {
 
 func (s *Server) Invoke(ctx context.Context, req *message.Request) (*message.Response, error) {
 	stub, ok := s.services[req.ServiceName]
+	resp := &message.Response{
+		MessageId:  req.MessageId,
+		Version:    req.Version,
+		Compress:   req.Compress,
+		Serializer: req.Serializer,
+	}
 	if !ok {
 		return nil, errors.New("rpc: service not found")
 	}
 	// service
 	data, err := stub.invoke(ctx, req.MethodName, req.Data)
+	resp.Data = data
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
-	return &message.Response{
-		Data: data,
-	}, nil
+	return resp, nil
 }
 
 // reflectionStub consider using unsafe in the future
@@ -103,7 +110,14 @@ func (s *reflectionStub) invoke(ctx context.Context, methodName string, data []b
 	// call
 	out := method.Call([]reflect.Value{reflect.ValueOf(ctx), in})
 	if out[1].Interface() != nil {
-		return nil, out[1].Interface().(error)
+		err = out[1].Interface().(error)
 	}
-	return json.Marshal(out[0].Interface())
+	if out[0].IsNil() {
+		return nil, err
+	}
+	res, er := json.Marshal(out[0].Interface())
+	if er != nil {
+		return nil, er
+	}
+	return res, err
 }

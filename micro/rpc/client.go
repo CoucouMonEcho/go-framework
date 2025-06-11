@@ -46,17 +46,31 @@ func setFuncField(service Service, p Proxy) error {
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
+				//TODO req param
 				req := &message.Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
 					Data:        reqData,
 				}
+				req.CalculateHeaderLength()
+				req.CalculateBodyLength()
+
 				resp, err := p.Invoke(ctx, req)
-				err = json.Unmarshal(resp.Data, retVal.Interface())
-				if err != nil {
-					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				var retErr error
+				if len(resp.Error) > 0 {
+					// business err
+					retErr = errors.New(string(resp.Error))
 				}
-				return []reflect.Value{retVal, reflect.Zero(reflect.TypeOf(new(error)).Elem())}
+				if len(resp.Data) > 0 {
+					err = json.Unmarshal(resp.Data, retVal.Interface())
+					if err != nil {
+						return []reflect.Value{retVal, reflect.ValueOf(err)}
+					}
+				}
+				if retErr == nil {
+					return []reflect.Value{retVal, reflect.Zero(reflect.TypeOf(new(error)).Elem())}
+				}
+				return []reflect.Value{retVal, reflect.ValueOf(retErr)}
 			})
 			fieldVal.Set(fn)
 		}
@@ -92,17 +106,12 @@ func NewClient(addr string) (*Client, error) {
 }
 
 func (c *Client) Invoke(ctx context.Context, req *message.Request) (*message.Response, error) {
-	data, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
+	data := message.EncodeReq(req)
 	resp, err := c.Send(ctx, data)
 	if err != nil {
 		return nil, err
 	}
-	return &message.Response{
-		Data: resp,
-	}, nil
+	return message.DecodeResp(resp), nil
 }
 
 func (c *Client) Send(ctx context.Context, data []byte) ([]byte, error) {
@@ -116,7 +125,7 @@ func (c *Client) Send(ctx context.Context, data []byte) ([]byte, error) {
 	}()
 
 	// write message body
-	_, err = conn.Write(EncodeMsg(data))
+	_, err = conn.Write(data)
 	if err != nil {
 		return nil, err
 	}
