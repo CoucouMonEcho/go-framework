@@ -3,24 +3,25 @@ package rpc
 import (
 	"code-practise/micro/pool"
 	"code-practise/micro/rpc/message"
+	"code-practise/micro/rpc/serialize"
+	"code-practise/micro/rpc/serialize/proto"
 	"context"
-	"encoding/json"
 	"errors"
 	"net"
 	"reflect"
 	"time"
 )
 
-// InitClientProxy assign values to function type fields
-func InitClientProxy(addr string, service Service) error {
-	client, err := NewClient(addr)
-	if err != nil {
-		return err
-	}
-	return setFuncField(service, client)
+var (
+	errOnewayClient = errors.New("rpc: oneway should not handle result")
+)
+
+// InitService assign values to function type fields
+func (c *Client) InitService(service Service) error {
+	return setFuncField(service, c, c.serializer)
 }
 
-func setFuncField(service Service, p Proxy) error {
+func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
 	if service == nil {
 		return errors.New("rpc: service is nil")
 	}
@@ -42,27 +43,39 @@ func setFuncField(service Service, p Proxy) error {
 			fn := reflect.MakeFunc(fieldTyp.Type, func(args []reflect.Value) []reflect.Value {
 				retVal := reflect.New(fieldTyp.Type.Out(0).Elem())
 				ctx := args[0].Interface().(context.Context)
-				reqData, err := json.Marshal(args[1].Interface())
+				reqData, err := s.Encode(args[1].Interface())
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
+
+				// meta
+				var meta map[string]string
+				if isOneway(ctx) {
+					meta = map[string]string{"one-way": "true"}
+				}
+
 				//TODO req param
 				req := &message.Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
 					Data:        reqData,
+					Serializer:  s.Code(),
+					Meta:        meta,
 				}
 				req.CalculateHeaderLength()
 				req.CalculateBodyLength()
 
-				resp, err := p.Invoke(ctx, req)
 				var retErr error
+				resp, err := p.Invoke(ctx, req)
+				if errors.Is(err, errOnewayClient) {
+					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				}
 				if len(resp.Error) > 0 {
 					// business err
 					retErr = errors.New(string(resp.Error))
 				}
 				if len(resp.Data) > 0 {
-					err = json.Unmarshal(resp.Data, retVal.Interface())
+					err = s.Decode(resp.Data, retVal.Interface())
 					if err != nil {
 						return []reflect.Value{retVal, reflect.ValueOf(err)}
 					}
@@ -79,12 +92,13 @@ func setFuncField(service Service, p Proxy) error {
 }
 
 type Client struct {
-	pool *pool.Pool
+	pool       *pool.Pool
+	serializer serialize.Serializer
 }
 
-//TODO option
+type ClientOption func(client *Client)
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 	p, err := pool.NewPool(&pool.Config{
 		InitialCap:  1,
 		MaxCap:      30,
@@ -100,21 +114,32 @@ func NewClient(addr string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
-		pool: p,
-	}, nil
+	res := &Client{
+		pool:       p,
+		serializer: &proto.Serializer{},
+	}
+	for _, opt := range opts {
+		opt(res)
+	}
+	return res, nil
+}
+
+func ClientWithSerializer(sl serialize.Serializer) ClientOption {
+	return func(client *Client) {
+		client.serializer = sl
+	}
 }
 
 func (c *Client) Invoke(ctx context.Context, req *message.Request) (*message.Response, error) {
 	data := message.EncodeReq(req)
-	resp, err := c.Send(ctx, data)
+	resp, err := c.send(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 	return message.DecodeResp(resp), nil
 }
 
-func (c *Client) Send(ctx context.Context, data []byte) ([]byte, error) {
+func (c *Client) send(ctx context.Context, data []byte) ([]byte, error) {
 	val, err := c.pool.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -128,6 +153,11 @@ func (c *Client) Send(ctx context.Context, data []byte) ([]byte, error) {
 	_, err = conn.Write(data)
 	if err != nil {
 		return nil, err
+	}
+
+	// oneway
+	if isOneway(ctx) {
+		return nil, errOnewayClient
 	}
 
 	// read

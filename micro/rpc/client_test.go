@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"code-practise/micro/rpc/message"
+	"code-practise/micro/rpc/serialize/json"
 	"context"
 	"errors"
 	"github.com/golang/mock/gomock"
@@ -50,13 +51,14 @@ func Test_setFuncField(t *testing.T) {
 			wantErr: errors.New("rpc: service must be a pointer to struct"),
 		},
 	}
+	s := &json.Serializer{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mock := tc.mock(ctrl)
-			err := setFuncField(tc.service, mock)
+			err := setFuncField(tc.service, mock, s)
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
