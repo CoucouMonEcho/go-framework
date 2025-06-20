@@ -228,6 +228,63 @@ func TestOneway(t *testing.T) {
 	}
 }
 
+func TestTimeOut(t *testing.T) {
+	// server
+	server := NewServer()
+	serviceServer := &TestServiceServerTimeout{}
+	server.RegisterService(serviceServer)
+	go func() {
+		err := server.Start("tcp", ":8081")
+		t.Log(err)
+	}()
+	time.Sleep(time.Second)
+
+	// client
+	serviceClient := &TestService{}
+	client, err := NewClient(":8081", ClientWithSerializer(&json.Serializer{}))
+	require.NoError(t, err)
+	err = client.InitService(serviceClient)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name string
+
+		mock func() context.Context
+
+		wangErr  error
+		wantResp *GetByIdResp
+	}{
+		{
+			name: "timeout",
+			mock: func() context.Context {
+				serviceServer.Err = errors.New("mock error")
+				serviceServer.Msg = "hello, world"
+				serviceServer.sleep = time.Second * 2
+				serviceServer.t = t
+				ctx, _ := context.WithTimeout(context.Background(), time.Second)
+				return ctx
+			},
+			wantResp: &GetByIdResp{},
+			wangErr:  context.DeadlineExceeded,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// timeout
+			ctx := tc.mock()
+
+			_, er := serviceClient.GetById(ctx, &GetByIdReq{Id: 123})
+			assert.Equal(t, tc.wangErr, er)
+			//if er != nil && resp != nil && resp.User != nil {
+			//	return
+			//}
+			////assert.Equal(t, resp, tc.wantResp)
+			//assert.Equal(t, resp.User, tc.wantResp.User)
+		})
+	}
+}
+
 // TestServiceServer rpc server
 type TestServiceServer struct {
 	Err error
@@ -258,6 +315,27 @@ func (t *TestServiceServer) GetByIdProto(ctx context.Context, req *gen.GetByIdRe
 }
 
 func (t *TestServiceServer) Name() string {
+	return "test-service"
+}
+
+type TestServiceServerTimeout struct {
+	t     *testing.T
+	sleep time.Duration
+	Err   error
+	Msg   string
+}
+
+func (t *TestServiceServerTimeout) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		t.t.Fatal("context deadline should be set")
+	}
+	time.Sleep(t.sleep)
+	return &GetByIdResp{
+		Msg: t.Msg,
+	}, t.Err
+}
+
+func (t *TestServiceServerTimeout) Name() string {
 	return "test-service"
 }
 

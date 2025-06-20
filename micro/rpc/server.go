@@ -9,6 +9,8 @@ import (
 	"errors"
 	"net"
 	"reflect"
+	"strconv"
+	"time"
 )
 
 var (
@@ -75,12 +77,19 @@ func (s *Server) handleConn(conn net.Conn) error {
 
 		// meta
 		ctx := context.Background()
+		cancel := func() {}
+		if deadlineStr, ok := req.Meta["deadline"]; ok {
+			if deadline, er := strconv.ParseInt(deadlineStr, 10, 64); er == nil {
+				ctx, cancel = context.WithDeadline(ctx, time.UnixMilli(deadline))
+			}
+		}
 		oneway, ok := req.Meta["one-way"]
 		if ok && oneway == "true" {
 			ctx = CtxWithOneway(ctx)
 		}
 
 		resp, err := s.Invoke(ctx, req)
+		cancel()
 		if errors.Is(err, errOnewayServer) {
 			return nil
 		}
