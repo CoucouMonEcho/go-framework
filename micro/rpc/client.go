@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"code-practise/micro/pool"
+	"code-practise/micro/rpc/compress"
+	"code-practise/micro/rpc/compress/donothing"
 	"code-practise/micro/rpc/message"
 	"code-practise/micro/rpc/serialize"
 	"code-practise/micro/rpc/serialize/proto"
@@ -19,10 +21,12 @@ var (
 
 // InitService assign values to function type fields
 func (c *Client) InitService(service Service) error {
-	return setFuncField(service, c, c.serializer)
+	return setFuncField(service, c, c.serializer, c.compressor)
 }
 
-func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
+func setFuncField(service Service, p Proxy,
+	s serialize.Serializer,
+	c compress.Compressor) error {
 	if service == nil {
 		return errors.New("rpc: service is nil")
 	}
@@ -44,7 +48,11 @@ func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
 			fn := reflect.MakeFunc(fieldTyp.Type, func(args []reflect.Value) []reflect.Value {
 				retVal := reflect.New(fieldTyp.Type.Out(0).Elem())
 				ctx := args[0].Interface().(context.Context)
-				reqData, err := s.Encode(args[1].Interface())
+				data, err := s.Encode(args[1].Interface())
+				if err != nil {
+					return []reflect.Value{retVal, reflect.ValueOf(err)}
+				}
+				reqData, err := c.Compress(data)
 				if err != nil {
 					return []reflect.Value{retVal, reflect.ValueOf(err)}
 				}
@@ -58,12 +66,13 @@ func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
 					meta["one-way"] = "true"
 				}
 
-				//TODO req param
+				// req param
 				req := &message.Request{
 					ServiceName: service.Name(),
 					MethodName:  fieldTyp.Name,
 					Data:        reqData,
 					Serializer:  s.Code(),
+					Compressor:  c.Code(),
 					Meta:        meta,
 				}
 				req.CalculateHeaderLength()
@@ -79,7 +88,11 @@ func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
 					retErr = errors.New(string(resp.Error))
 				}
 				if len(resp.Data) > 0 {
-					err = s.Decode(resp.Data, retVal.Interface())
+					respData, er := c.Uncompress(resp.Data)
+					if er != nil {
+						return []reflect.Value{retVal, reflect.ValueOf(er)}
+					}
+					err = s.Decode(respData, retVal.Interface())
 					if err != nil {
 						return []reflect.Value{retVal, reflect.ValueOf(err)}
 					}
@@ -98,6 +111,7 @@ func setFuncField(service Service, p Proxy, s serialize.Serializer) error {
 type Client struct {
 	pool       *pool.Pool
 	serializer serialize.Serializer
+	compressor compress.Compressor
 }
 
 type ClientOption func(client *Client)
@@ -121,6 +135,7 @@ func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 	res := &Client{
 		pool:       p,
 		serializer: &proto.Serializer{},
+		compressor: &donothing.Compressor{},
 	}
 	for _, opt := range opts {
 		opt(res)
@@ -131,6 +146,12 @@ func NewClient(addr string, opts ...ClientOption) (*Client, error) {
 func ClientWithSerializer(sl serialize.Serializer) ClientOption {
 	return func(client *Client) {
 		client.serializer = sl
+	}
+}
+
+func ClientWithCompressor(compressor compress.Compressor) ClientOption {
+	return func(c *Client) {
+		c.compressor = compressor
 	}
 }
 

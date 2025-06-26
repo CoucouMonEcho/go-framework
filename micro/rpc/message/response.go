@@ -10,7 +10,7 @@ type Response struct {
 	BodyLength uint32
 	MessageId  uint32
 	Version    uint8
-	Compress   uint8
+	Compressor uint8
 	Serializer uint8
 
 	Error []byte
@@ -39,7 +39,7 @@ func EncodeResp(resp *Response) []byte {
 	cur = cur[1:]
 
 	// compress
-	cur[0] = resp.Compress
+	cur[0] = resp.Compressor
 	cur = cur[1:]
 
 	// serializer
@@ -76,7 +76,7 @@ func DecodeResp(data []byte) *Response {
 	head = head[1:]
 
 	// compress
-	resp.Compress = head[0]
+	resp.Compressor = head[0]
 	head = head[1:]
 
 	// serializer

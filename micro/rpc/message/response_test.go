@@ -16,7 +16,7 @@ func TestEncodeDecodeResponse(t *testing.T) {
 			resp: &Response{
 				MessageId:  123,
 				Version:    12,
-				Compress:   13,
+				Compressor: 13,
 				Serializer: 14,
 				Error:      []byte("error"),
 				Data:       []byte("hello, world"),
@@ -27,7 +27,7 @@ func TestEncodeDecodeResponse(t *testing.T) {
 			resp: &Response{
 				MessageId:  123,
 				Version:    12,
-				Compress:   13,
+				Compressor: 13,
 				Serializer: 14,
 				Data:       []byte("hello, world"),
 			},
@@ -37,7 +37,7 @@ func TestEncodeDecodeResponse(t *testing.T) {
 			resp: &Response{
 				MessageId:  123,
 				Version:    12,
-				Compress:   13,
+				Compressor: 13,
 				Serializer: 14,
 				Error:      []byte("error"),
 			},
@@ -47,7 +47,7 @@ func TestEncodeDecodeResponse(t *testing.T) {
 			resp: &Response{
 				MessageId:  123,
 				Version:    12,
-				Compress:   13,
+				Compressor: 13,
 				Serializer: 14,
 				Data:       []byte("hello, world\n\r"),
 			},

@@ -1,6 +1,9 @@
 package rpc
 
 import (
+	"code-practise/micro/rpc/compress"
+	"code-practise/micro/rpc/compress/donothing"
+	"code-practise/micro/rpc/compress/gzip"
 	"code-practise/micro/rpc/message"
 	"code-practise/micro/rpc/serialize"
 	"code-practise/micro/rpc/serialize/json"
@@ -20,20 +23,21 @@ var (
 type Server struct {
 	services    map[string]*reflectionStub
 	serializers map[uint8]serialize.Serializer
+	compressors map[uint8]compress.Compressor
 }
 
 func NewServer() *Server {
 	res := &Server{
 		services:    make(map[string]*reflectionStub, 16),
 		serializers: make(map[uint8]serialize.Serializer, 4),
+		compressors: make(map[uint8]compress.Compressor, 4),
 	}
+	//FIXME option
 	res.RegisterSerializer(&proto.Serializer{})
 	res.RegisterSerializer(&json.Serializer{})
+	res.RegisterCompressor(&donothing.Compressor{})
+	res.RegisterCompressor(&gzip.Compressor{})
 	return res
-}
-
-func (s *Server) RegisterSerializer(sl serialize.Serializer) {
-	s.serializers[sl.Code()] = sl
 }
 
 func (s *Server) RegisterService(service Service) {
@@ -41,7 +45,16 @@ func (s *Server) RegisterService(service Service) {
 		s:           service,
 		value:       reflect.ValueOf(service),
 		serializers: s.serializers,
+		compressors: s.compressors,
 	}
+}
+
+func (s *Server) RegisterSerializer(sl serialize.Serializer) {
+	s.serializers[sl.Code()] = sl
+}
+
+func (s *Server) RegisterCompressor(cp compress.Compressor) {
+	s.compressors[cp.Code()] = cp
 }
 
 func (s *Server) Start(network, addr string) error {
@@ -113,7 +126,7 @@ func (s *Server) Invoke(ctx context.Context, req *message.Request) (*message.Res
 	resp := &message.Response{
 		MessageId:  req.MessageId,
 		Version:    req.Version,
-		Compress:   req.Compress,
+		Compressor: req.Compressor,
 		Serializer: req.Serializer,
 	}
 	if !ok {
@@ -141,6 +154,7 @@ type reflectionStub struct {
 	s           Service
 	value       reflect.Value
 	serializers map[uint8]serialize.Serializer
+	compressors map[uint8]compress.Compressor
 }
 
 func (s *reflectionStub) invoke(ctx context.Context, req *message.Request) ([]byte, error) {
@@ -148,11 +162,21 @@ func (s *reflectionStub) invoke(ctx context.Context, req *message.Request) ([]by
 	method := s.value.MethodByName(req.MethodName)
 	// arg
 	in := reflect.New(method.Type().In(1).Elem())
+	// compress
+	compressor, ok := s.compressors[req.Compressor]
+	if !ok {
+		return nil, errors.New("rpc: compressor not found")
+	}
+	data, err := compressor.Uncompress(req.Data)
+	if err != nil {
+		return nil, err
+	}
+	// serialize
 	serializer, ok := s.serializers[req.Serializer]
 	if !ok {
 		return nil, errors.New("rpc: serializer not found")
 	}
-	err := serializer.Decode(req.Data, in.Interface())
+	err = serializer.Decode(data, in.Interface())
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +188,13 @@ func (s *reflectionStub) invoke(ctx context.Context, req *message.Request) ([]by
 	if out[0].IsNil() {
 		return nil, err
 	}
-	res, er := serializer.Encode(out[0].Interface())
+	// serialize
+	resp, er := serializer.Encode(out[0].Interface())
+	if er != nil {
+		return nil, er
+	}
+	// compress
+	res, er := compressor.Compress(resp)
 	if er != nil {
 		return nil, er
 	}

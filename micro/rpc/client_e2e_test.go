@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"code-practise/micro/rpc/compress/gzip"
 	"code-practise/micro/rpc/proto/gen"
 	"code-practise/micro/rpc/serialize/json"
 	"code-practise/micro/rpc/serialize/proto"
@@ -27,7 +28,8 @@ func TestInitClientProxyProto(t *testing.T) {
 
 	// client
 	serviceClient := &TestService{}
-	client, err := NewClient(":8081", ClientWithSerializer(&proto.Serializer{}))
+	//client, err := NewClient(":8081", ClientWithSerializer(&proto.Serializer{}))
+	client, err := NewClient(":8081", ClientWithSerializer(&proto.Serializer{}), ClientWithCompressor(&gzip.Compressor{}))
 	require.NoError(t, err)
 	err = client.InitService(serviceClient)
 	require.NoError(t, err)

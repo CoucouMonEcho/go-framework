@@ -16,7 +16,7 @@ type Request struct {
 	BodyLength uint32
 	MessageId  uint32
 	Version    uint8
-	Compress   uint8
+	Compressor uint8
 	Serializer uint8
 
 	ServiceName string
@@ -49,7 +49,7 @@ func EncodeReq(req *Request) []byte {
 	cur = cur[1:]
 
 	// compress
-	cur[0] = req.Compress
+	cur[0] = req.Compressor
 	cur = cur[1:]
 
 	// serializer
@@ -105,7 +105,7 @@ func DecodeReq(data []byte) *Request {
 	head = head[1:]
 
 	// compress
-	req.Compress = head[0]
+	req.Compressor = head[0]
 	head = head[1:]
 
 	// serializer

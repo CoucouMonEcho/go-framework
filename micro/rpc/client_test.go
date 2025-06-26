@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"code-practise/micro/rpc/compress/donothing"
 	"code-practise/micro/rpc/message"
 	"code-practise/micro/rpc/serialize/json"
 	"context"
@@ -52,13 +53,14 @@ func Test_setFuncField(t *testing.T) {
 		},
 	}
 	s := &json.Serializer{}
+	c := &donothing.Compressor{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mock := tc.mock(ctrl)
-			err := setFuncField(tc.service, mock, s)
+			err := setFuncField(tc.service, mock, s, c)
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {
 				return
