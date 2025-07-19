@@ -2,7 +2,7 @@ syntax = "proto3";
 package test;
 option go_package = "/gen";
 
-//protoc --go_out=. user.proto
+//protoc --go_out=. --go-grpc_out=. test.proto
 
 service TestService {
   rpc GetById(GetByIdReq) returns (GetByIdResp);
@@ -17,6 +17,6 @@ message GetByIdResp {
 }
 
 message User {
-  uint64 id = 1;
-  string msg = 2;
+  uint64 Id = 1;
+  string Msg = 2;
 }
