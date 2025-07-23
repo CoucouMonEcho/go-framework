@@ -17,6 +17,7 @@ type Server struct {
 	*grpc.Server
 	listener net.Listener
 	si       registry.ServiceInstance
+	weight   uint32
 }
 
 func NewServer(name string, opts ...ServerOption) (*Server, error) {
@@ -43,6 +44,7 @@ func (s *Server) Start(addr string) error {
 			Name: s.name,
 			//FIXME the container returns 127.0.0.1
 			Address: listener.Addr().String(),
+			Weight:  s.weight,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), s.registerTimeout)
 		defer cancel()
@@ -73,5 +75,11 @@ func (s *Server) Close() error {
 func ServerWithRegistry(registry registry.Registry) ServerOption {
 	return func(server *Server) {
 		server.registry = registry
+	}
+}
+
+func ServerWithWeight(weight uint32) ServerOption {
+	return func(server *Server) {
+		server.weight = weight
 	}
 }
