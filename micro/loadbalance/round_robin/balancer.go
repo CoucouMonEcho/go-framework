@@ -13,30 +13,30 @@ type Balancer struct {
 }
 
 func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	if len(b.conns) == 0 {
+	if b.length == 0 {
 		return balancer.PickResult{}, balancer.ErrNoSubConnAvailable
 	}
 	idx := atomic.AddInt32(&b.index, 1)
-	c := b.conns[idx%b.length]
+	conn := b.conns[idx%b.length]
 	return balancer.PickResult{
-		SubConn: c,
+		SubConn: conn,
 		Done: func(info balancer.DoneInfo) {
 
 		},
 	}, nil
 }
 
-type Builder struct {
+type BalancerBuilder struct {
 }
 
-func (b *Builder) Build(info base.PickerBuildInfo) balancer.Picker {
-	connections := make([]balancer.SubConn, 0, len(info.ReadySCs))
+func (b *BalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
+	conns := make([]balancer.SubConn, 0, len(info.ReadySCs))
 	for conn := range info.ReadySCs {
-		connections = append(connections, conn)
+		conns = append(conns, conn)
 	}
 	return &Balancer{
-		conns:  connections,
+		conns:  conns,
 		index:  -1,
-		length: int32(len(connections)),
+		length: int32(len(conns)),
 	}
 }

@@ -84,14 +84,14 @@ type WeightBalancerBuilder struct {
 }
 
 func (w *WeightBalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	connections := make([]*weightConn, 0, len(info.ReadySCs))
+	conns := make([]*weightConn, 0, len(info.ReadySCs))
 	for conn, connInfo := range info.ReadySCs {
 		//weight, err := strconv.ParseInt(weightStr, 10, 64)
 		//if err != nil {
 		//	panic(err)
 		//}
 		weight := connInfo.Address.Attributes.Value("weight").(uint32)
-		connections = append(connections, &weightConn{
+		conns = append(conns, &weightConn{
 			conn:            conn,
 			weight:          weight,
 			currentWeight:   weight,
@@ -99,7 +99,7 @@ func (w *WeightBalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker
 		})
 	}
 	return &WeightBalancer{
-		conns: connections,
+		conns: conns,
 	}
 }
 

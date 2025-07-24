@@ -16,9 +16,9 @@ func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 		return balancer.PickResult{}, balancer.ErrNoSubConnAvailable
 	}
 	idx := rand.Intn(b.length)
-	c := b.conns[idx]
+	conn := b.conns[idx]
 	return balancer.PickResult{
-		SubConn: c,
+		SubConn: conn,
 		Done: func(info balancer.DoneInfo) {
 
 		},

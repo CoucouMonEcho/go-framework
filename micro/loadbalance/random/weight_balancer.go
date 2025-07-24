@@ -17,16 +17,16 @@ func (w *WeightBalancer) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 	}
 	tgt := rand.Intn(int(w.totalWeight) + 1)
 	var idx int
-	for i, c := range w.conns {
-		tgt -= int(c.weight)
+	for i, conn := range w.conns {
+		tgt -= int(conn.weight)
 		if tgt <= 0 {
 			idx = i
 			break
 		}
 	}
-	c := w.conns[idx]
+	res := w.conns[idx]
 	return balancer.PickResult{
-		SubConn: c.conn,
+		SubConn: res.conn,
 		Done: func(info balancer.DoneInfo) {
 			// weight modified is unnecessary with random
 		},

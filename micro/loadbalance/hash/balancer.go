@@ -16,9 +16,9 @@ func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	}
 	// can't get IP or other req info
 	idx := info.Ctx.Value("hash_code").(int)
-	c := b.conns[idx]
+	conn := b.conns[idx]
 	return balancer.PickResult{
-		SubConn: c,
+		SubConn: conn,
 		Done: func(info balancer.DoneInfo) {
 
 		},
