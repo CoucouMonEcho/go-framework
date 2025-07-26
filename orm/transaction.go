@@ -3,6 +3,7 @@ package orm
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 var (
@@ -43,7 +44,7 @@ func (t *Tx) Rollback() error {
 
 func (t *Tx) RollbackIfNotCommit() error {
 	err := t.tx.Rollback()
-	if err != sql.ErrTxDone {
+	if !errors.Is(err, sql.ErrTxDone) {
 		return err
 	}
 	return nil

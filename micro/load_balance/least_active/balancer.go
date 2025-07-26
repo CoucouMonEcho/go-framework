@@ -1,6 +1,7 @@
-package leastactive
+package least_active
 
 import (
+	"code-practise/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"math"
@@ -8,17 +9,18 @@ import (
 )
 
 type Balancer struct {
-	conns []*activeConn
+	connes []*activeConn
+	//TODO filter
 }
 
-func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	if len(b.conns) == 0 {
+func (b *Balancer) Pick(_ balancer.PickInfo) (balancer.PickResult, error) {
+	if len(b.connes) == 0 {
 		return balancer.PickResult{}, balancer.ErrNoSubConnAvailable
 	}
 	res := &activeConn{
 		cnt: math.MaxUint32,
 	}
-	for _, conn := range b.conns {
+	for _, conn := range b.connes {
 		if atomic.LoadUint32(&conn.cnt) < res.cnt {
 			res = conn
 		}
@@ -35,19 +37,25 @@ func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	}, nil
 }
 
+var _ route.BalancerBuilder = &BalancerBuilder{}
+
 type BalancerBuilder struct {
 }
 
 func (b *BalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	conns := make([]*activeConn, 0, len(info.ReadySCs))
+	connes := make([]*activeConn, 0, len(info.ReadySCs))
 	for conn := range info.ReadySCs {
-		conns = append(conns, &activeConn{
+		connes = append(connes, &activeConn{
 			conn: conn,
 		})
 	}
 	return &Balancer{
-		conns: conns,
+		connes: connes,
 	}
+}
+
+func (b *BalancerBuilder) Name() string {
+	return "LEAST_ACTIVE"
 }
 
 type activeConn struct {

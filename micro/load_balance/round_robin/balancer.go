@@ -10,17 +10,17 @@ import (
 
 type Balancer struct {
 	index  int32
-	conns  []*subConn
-	length int32
+	connes []*subConn
 	filter route.Filter
 }
 
 func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	candidates := make([]*subConn, 0, len(b.conns))
-	for _, conn := range b.conns {
-		if b.filter != nil && b.filter(info, conn.addr) {
-			candidates = append(candidates, conn)
+	candidates := make([]*subConn, 0, len(b.connes))
+	for _, conn := range b.connes {
+		if b.filter != nil && !b.filter(info, conn.addr) {
+			continue
 		}
+		candidates = append(candidates, conn)
 	}
 	if len(candidates) == 0 {
 		// can also return to the default node
@@ -36,24 +36,29 @@ func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	}, nil
 }
 
+var _ route.BalancerBuilder = &BalancerBuilder{}
+
 type BalancerBuilder struct {
 	Filter route.Filter
 }
 
 func (b *BalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	conns := make([]*subConn, 0, len(info.ReadySCs))
+	connes := make([]*subConn, 0, len(info.ReadySCs))
 	for conn, connInfo := range info.ReadySCs {
-		conns = append(conns, &subConn{
+		connes = append(connes, &subConn{
 			conn: conn,
 			addr: connInfo.Address,
 		})
 	}
 	return &Balancer{
-		conns:  conns,
+		connes: connes,
 		index:  -1,
-		length: int32(len(conns)),
 		filter: b.Filter,
 	}
+}
+
+func (b *BalancerBuilder) Name() string {
+	return "ROUND_ROBIN"
 }
 
 type subConn struct {

@@ -24,7 +24,9 @@ func BenchmarkAccessSetColumns(b *testing.B) {
 
 		mockDB, mock, err := sqlmock.New()
 		require.NoError(b, err)
-		defer mockDB.Close()
+		defer func() {
+			_ = mockDB.Close()
+		}()
 
 		mockRows := sqlmock.NewRows([]string{"id", "first_name", "age", "last_name"})
 		row := []driver.Value{"1", "Tom", "18", "Jerry"}
@@ -119,7 +121,9 @@ func testSetColumns(t *testing.T, creator Creator) {
 
 	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

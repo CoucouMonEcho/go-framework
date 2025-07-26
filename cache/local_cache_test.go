@@ -9,6 +9,8 @@ import (
 )
 
 func TestBuildInMapCache_Get(t *testing.T) {
+	NewMaxCntCache(32, &BuildInMapCache{})
+	NewMaxMemoryCache(32, &BuildInMapCache{})
 	testCases := []struct {
 		name string
 

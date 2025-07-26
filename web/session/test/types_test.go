@@ -8,6 +8,7 @@ import (
 	"code-practise/web/session"
 	"code-practise/web/session/cookie"
 	"code-practise/web/session/memory"
+	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
 	"testing"
@@ -15,8 +16,8 @@ import (
 )
 
 func TestHttpServer(t *testing.T) {
-	var m *session.Manager = &session.Manager{
-		Propagator: cookie.NewPropagator(),
+	m := &session.Manager{
+		Propagator: cookie.NewPropagator(cookie.WithCookieName("session")),
 		Store:      memory.NewStore(time.Minute * 15),
 		CtxSessKey: "sessionKey",
 	}
@@ -93,5 +94,6 @@ func TestHttpServer(t *testing.T) {
 		ctx.RespData = []byte(val.(string))
 		return
 	})
-	server.Start(":8081")
+	err := server.Start(":8081")
+	require.NoError(t, err)
 }

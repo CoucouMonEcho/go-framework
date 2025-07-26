@@ -3,16 +3,19 @@ package accesslog
 import (
 	"code-practise/web"
 	"fmt"
+	"log"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestMiddleBuilder_Build(t *testing.T) {
-	builder := MiddlewareBuilder{}
+	builder := NewMiddlewareBuilder()
 	builder.LogFunc(func(log string) {
 		fmt.Println(log)
 	})
-	h := web.NewHTTPServer(web.ServerWithMiddlewares(builder.Build()))
+	h := web.NewHTTPServer(web.ServerWithMiddlewares(builder.Build()), web.ServerWithLogger(func(msg string, args ...any) {
+		log.Println(msg, args)
+	}))
 	h.Get("/user/*", func(ctx *web.Context) {
 		fmt.Println("A")
 	})

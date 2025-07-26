@@ -39,42 +39,42 @@ func (ctx *Context) Render(templateName string, data any) error {
 	return nil
 }
 
-func (c *Context) SetCookie(ck *http.Cookie) {
-	http.SetCookie(c.Resp, ck)
+func (ctx *Context) SetCookie(ck *http.Cookie) {
+	http.SetCookie(ctx.Resp, ck)
 }
 
-func (c *Context) RespJSONOK(val any) error {
-	return c.RespJSON(http.StatusOK, val)
+func (ctx *Context) RespJSONOK(val any) error {
+	return ctx.RespJSON(http.StatusOK, val)
 }
 
-func (c *Context) RespJSON(status int, val any) error {
+func (ctx *Context) RespJSON(status int, val any) error {
 	data, err := json.Marshal(val)
 	if err != nil {
 		return err
 	}
 	// c.Resp.Header().Set("Content-Type", "application/json")
 	// c.Resp.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	c.RespCode = status
-	c.RespData = data
+	ctx.RespCode = status
+	ctx.RespData = data
 	return err
 }
 
-func (c *Context) BindJSON(val any) error {
-	decoder := json.NewDecoder(c.Req.Body)
+func (ctx *Context) BindJSON(val any) error {
+	decoder := json.NewDecoder(ctx.Req.Body)
 	// decoder.UseNumber()
 	// decoder.DisallowUnknownFields()
 	return decoder.Decode(val)
 }
 
-func (c *Context) FormValue(key string) *StringValue {
+func (ctx *Context) FormValue(key string) *StringValue {
 	// form has cache
-	err := c.Req.ParseForm()
+	err := ctx.Req.ParseForm()
 	if err != nil {
 		return &StringValue{
 			err: err,
 		}
 	}
-	vals, ok := c.Req.Form[key]
+	vals, ok := ctx.Req.Form[key]
 	if !ok {
 		return &StringValue{
 			err: errors.New("web: key not found"),
@@ -85,12 +85,12 @@ func (c *Context) FormValue(key string) *StringValue {
 	}
 }
 
-func (c *Context) QueryValue(key string) *StringValue {
+func (ctx *Context) QueryValue(key string) *StringValue {
 	// query has no cache
-	if c.queryParams == nil {
-		c.queryParams = c.Req.URL.Query()
+	if ctx.queryParams == nil {
+		ctx.queryParams = ctx.Req.URL.Query()
 	}
-	vals, ok := c.queryParams[key]
+	vals, ok := ctx.queryParams[key]
 	if !ok || len(vals) == 0 {
 		return &StringValue{
 			err: errors.New("web: key not found"),
@@ -101,8 +101,8 @@ func (c *Context) QueryValue(key string) *StringValue {
 	}
 }
 
-func (c *Context) PathValue(key string) *StringValue {
-	val, ok := c.pathParams[key]
+func (ctx *Context) PathValue(key string) *StringValue {
+	val, ok := ctx.pathParams[key]
 	if !ok {
 		return &StringValue{
 			err: errors.New("web: key not found"),

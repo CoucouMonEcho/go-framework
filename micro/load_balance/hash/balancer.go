@@ -1,22 +1,23 @@
 package round_robin
 
 import (
+	"code-practise/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 )
 
-type ConsistentHashBalancer struct {
-	conns  []balancer.SubConn
+type Balancer struct {
+	connes []balancer.SubConn
 	length int
 }
 
-func (c *ConsistentHashBalancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	if c.length == 0 {
+func (b *Balancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
+	if b.length == 0 {
 		return balancer.PickResult{}, balancer.ErrNoSubConnAvailable
 	}
-	//FIXME can't get IP or other req info
+	// can't get IP or other req info
 	idx := info.Ctx.Value("hash_code").(int)
-	conn := c.conns[idx]
+	conn := b.connes[idx]
 	return balancer.PickResult{
 		SubConn: conn,
 		Done: func(info balancer.DoneInfo) {
@@ -25,17 +26,22 @@ func (c *ConsistentHashBalancer) Pick(info balancer.PickInfo) (balancer.PickResu
 	}, nil
 }
 
-type ConsistentHashBalancerBuilder struct {
+var _ route.BalancerBuilder = &BalancerBuilder{}
+
+type BalancerBuilder struct {
 }
 
-func (c *ConsistentHashBalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	//FIXME unable to establish consistent hash mapping information
+func (b *BalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	connections := make([]balancer.SubConn, 0, len(info.ReadySCs))
 	for conn := range info.ReadySCs {
 		connections = append(connections, conn)
 	}
-	return &ConsistentHashBalancer{
-		conns:  connections,
+	return &Balancer{
+		connes: connections,
 		length: len(connections),
 	}
+}
+
+func (b *BalancerBuilder) Name() string {
+	return "HASH"
 }

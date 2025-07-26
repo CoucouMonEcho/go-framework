@@ -1,8 +1,7 @@
-package registry
+package etcd
 
 import (
 	"code-practise/micro"
-	"code-practise/micro/registry/etcd"
 	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ func TestClient(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	r, err := etcd.NewRegistry(etcdClient)
+	r, err := NewRegistry(etcdClient)
 	require.NoError(t, err)
 
 	c, err := micro.NewClient(micro.ClientWithInsecure(),

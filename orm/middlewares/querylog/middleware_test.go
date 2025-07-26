@@ -16,7 +16,9 @@ func TestNewMiddlewareBuilder(t *testing.T) {
 
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := orm.OpenDB(mockDB, orm.DBWithMiddlewares(NewMiddlewareBuilder().LogFunc(func(sql string, args []any) {
 		querySQL = sql
 		queryArgs = args

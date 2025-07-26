@@ -97,7 +97,7 @@ func DBUseReflect() DBOption {
 	}
 }
 
-// can be used to share the same registry with different dbs
+// DBWithRegistry can be used to share the same registry with different dbs
 func DBWithRegistry(r model.Registry) DBOption {
 	return func(db *DB) {
 		db.r = r

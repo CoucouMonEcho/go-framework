@@ -14,7 +14,9 @@ import (
 func TestSelector_Build(t *testing.T) {
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 
@@ -101,6 +103,7 @@ func TestSelector_Build(t *testing.T) {
 			builder: (NewSelector[TestModel](db)).
 				Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1"))).
 				GroupBy(C("FirstName"), C("Age")).
+				Having(Count("Id").Eq(1)).
 				Having(Avg("FirstName").Eq("user1")).
 				OrderBy(Asc("Id"), Desc("Age")).
 				Limit(2).
@@ -128,7 +131,9 @@ func TestSelector_Build(t *testing.T) {
 func TestSelector_Select(t *testing.T) {
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 
@@ -210,7 +215,7 @@ func TestSelector_Select(t *testing.T) {
 		},
 		{
 			name:    "column as",
-			builder: (NewSelector[TestModel](db)).Select(C("FirstName").As("my_name"), Max("Age").As("max")).Where(C("Age").As("aaa").Eq(18).And(C("FirstName").Eq("user1"))),
+			builder: (NewSelector[TestModel](db)).Select(C("FirstName").As("my_name"), Max("Age").As("max"), Min("Age").As("min"), Sum("Age").As("sum")).Where(C("Age").As("aaa").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
 				SQL:  "SELECT `first_name` AS `my_name`, MAX(`age`) AS `max` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "user1"},
@@ -233,7 +238,9 @@ func TestSelector_Select(t *testing.T) {
 func TestSelector_Get(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 
@@ -308,7 +315,9 @@ func TestSelector_Get(t *testing.T) {
 func TestSelector_Join(t *testing.T) {
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 
@@ -402,6 +411,13 @@ func TestSelector_Join(t *testing.T) {
 			},
 		},
 	}
+
+	s := NewSelector[TestModel](db).
+		Where(C("Age").Eq(18).Or(C("FirstName").Eq("user1")))
+	Any(s.AsSubquery("s1"))
+	All(s.AsSubquery("s1"))
+	Some(s.AsSubquery("s1"))
+	Exists(s.AsSubquery("s1"))
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

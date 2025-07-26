@@ -13,16 +13,16 @@ type grpcResolverBuilder struct {
 	timeout time.Duration
 }
 
-func NewResolverBuilder(r registry.Registry, timeout time.Duration) (*grpcResolverBuilder, error) {
-	return &grpcResolverBuilder{
-		r:       r,
-		timeout: timeout,
-	}, nil
-}
+//func NewResolverBuilder(r registry.Registry, timeout time.Duration) (*grpcResolverBuilder, error) {
+//	return &grpcResolverBuilder{
+//		r:       r,
+//		timeout: timeout,
+//	}, nil
+//}
 
 func (b *grpcResolverBuilder) Build(target resolver.Target,
 	cc resolver.ClientConn,
-	opts resolver.BuildOptions) (resolver.Resolver, error) {
+	_ resolver.BuildOptions) (resolver.Resolver, error) {
 	r := &grpcResolver{
 		cc:      cc,
 		r:       b.r,
@@ -46,7 +46,7 @@ type grpcResolver struct {
 	close   chan struct{}
 }
 
-func (g *grpcResolver) ResolveNow(options resolver.ResolveNowOptions) {
+func (g *grpcResolver) ResolveNow(_ resolver.ResolveNowOptions) {
 	g.resolve()
 }
 
@@ -74,7 +74,7 @@ func (g *grpcResolver) watch() {
 func (g *grpcResolver) resolve() {
 	ctx, cancel := context.WithTimeout(context.Background(), g.timeout)
 	defer cancel()
-	instances, err := g.r.LisServices(ctx, g.target.Endpoint())
+	instances, err := g.r.ListServices(ctx, g.target.Endpoint())
 	if err != nil {
 		g.cc.ReportError(err)
 		return

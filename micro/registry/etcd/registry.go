@@ -42,7 +42,7 @@ func (r *Registry) UnRegister(ctx context.Context, si registry.ServiceInstance) 
 	return err
 }
 
-func (r *Registry) LisServices(ctx context.Context, name string) ([]registry.ServiceInstance, error) {
+func (r *Registry) ListServices(ctx context.Context, name string) ([]registry.ServiceInstance, error) {
 	getResp, err := r.c.Get(ctx, r.serviceKey(name), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
@@ -58,8 +58,6 @@ func (r *Registry) LisServices(ctx context.Context, name string) ([]registry.Ser
 	}
 	return res, nil
 }
-
-type aChan chan<- string
 
 func (r *Registry) Subscribe(name string) (<-chan registry.Event, error) {
 	ctx, cancel := context.WithCancel(context.Background())

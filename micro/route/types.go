@@ -2,6 +2,7 @@ package route
 
 import (
 	"google.golang.org/grpc/balancer"
+	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -16,4 +17,9 @@ func (g GroupFilterBuilder) Build() Filter {
 		input := info.Ctx.Value("group")
 		return tgt == input
 	}
+}
+
+type BalancerBuilder interface {
+	Build(info base.PickerBuildInfo) balancer.Picker
+	Name() string
 }

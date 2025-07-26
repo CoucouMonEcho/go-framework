@@ -19,7 +19,9 @@ func Test_Curd(t *testing.T) {
 	err = db.Ping()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 	defer cancel()
 
 	_, err = db.ExecContext(ctx, `
@@ -74,7 +76,9 @@ func Test_Transaction(t *testing.T) {
 	err = db.Ping()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 	defer cancel()
 
 	_, err = db.ExecContext(ctx, `
@@ -119,7 +123,9 @@ func TestPrepareStatement(t *testing.T) {
 	err = db.Ping()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 	defer cancel()
 
 	_, err = db.ExecContext(ctx, `
@@ -148,7 +154,9 @@ CREATE TABLE IF NOT EXISTS test_model (
 	//
 	//1. Reference Counting: When a threshold is exceeded, the least used STMT is closed
 	//2. In "IN" query, STMT is not used or a one-time STMT is used
-	defer stmt.Close()
+	defer func() {
+		_ = stmt.Close()
+	}()
 	require.NoError(t, err)
 	rows, err := stmt.Query(1)
 	require.NoError(t, err)

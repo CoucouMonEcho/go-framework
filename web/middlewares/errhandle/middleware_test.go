@@ -3,6 +3,7 @@ package errhandle
 import (
 	"bytes"
 	"code-practise/web"
+	"github.com/stretchr/testify/require"
 	"html/template"
 	"net/http"
 	"testing"
@@ -27,5 +28,6 @@ func TestNewMiddlewareBuilder(t *testing.T) {
 	}
 	server := web.NewHTTPServer(web.ServerWithMiddlewares(NewMiddlewareBuilder().
 		RegisterError(http.StatusNotFound, buffer.Bytes()).Build()))
-	server.Start(":8081")
+	err = server.Start(":8081")
+	require.NoError(t, err)
 }

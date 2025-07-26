@@ -231,6 +231,7 @@ func (s *Selector[T]) AsSubquery(alias string) Subquery {
 		t:       t,
 		builder: s,
 		columns: s.columns,
+		alias:   alias,
 	}
 }
 

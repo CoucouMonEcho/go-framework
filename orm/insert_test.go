@@ -2,6 +2,7 @@ package orm
 
 import (
 	"code-practise/orm/internal/errs"
+	"code-practise/orm/model"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -15,7 +16,9 @@ import (
 func TestInserter_Build(t *testing.T) {
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
+	defer func() {
+		_ = mockDB.Close()
+	}()
 	db, err := OpenDB(mockDB)
 	require.NoError(t, err)
 
@@ -131,8 +134,11 @@ func TestInserter_Build(t *testing.T) {
 func TestInserter_SQLite_upsert(t *testing.T) {
 	mockDB, _, err := sqlmock.New()
 	require.NoError(t, err)
-	defer mockDB.Close()
-	db, err := OpenDB(mockDB, DBWithDialect(DialectSQLite))
+	defer func() {
+		_ = mockDB.Close()
+	}()
+	db, err := OpenDB(mockDB, DBWithDialect(DialectSQLite), DBUseReflect(), DBWithRegistry(model.NewRegistry()))
+	MustOpen("127.0.0.1:3306", "test")
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -248,4 +254,18 @@ func TestInserter_Exec(t *testing.T) {
 			assert.Equal(t, tc.affected, affected)
 		})
 	}
+}
+
+func TestDeleter_Exec(t *testing.T) {
+	mockDB, _, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() {
+		if mockDB != nil {
+			err = mockDB.Close()
+		}
+	}()
+	db, err := OpenDB(mockDB, DBWithDialect(DialectPostgreSQL))
+	require.NoError(t, err)
+
+	NewDeleter[TestModel](db)
 }

@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"testing"
 	"time"
@@ -16,10 +17,10 @@ import (
 func TestBalancer_e2e_Pick(t *testing.T) {
 	go func() {
 		// server
-		us := &TestServiceServer{}
+		ts := &TestServiceServer{}
 		server := grpc.NewServer()
 
-		gen.RegisterTestServiceServer(server, us)
+		gen.RegisterTestServiceServer(server, ts)
 		l, err := net.Listen("tcp", ":8081")
 		require.NoError(t, err)
 		err = server.Serve(l)
@@ -29,7 +30,7 @@ func TestBalancer_e2e_Pick(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	balancer.Register(base.NewBalancerBuilder("DEMO_ROUND_ROBIN", &BalancerBuilder{}, base.Config{HealthCheck: true}))
 	// client
-	cc, err := grpc.Dial("localhost:8081", grpc.WithInsecure(),
+	cc, err := grpc.NewClient("localhost:8081", grpc.WithTransportCredentials(insecure.NewCredentials()),
 		//grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"DEMO_ROUND_ROBIN"}`))
 	require.NoError(t, err)
@@ -46,7 +47,7 @@ type TestServiceServer struct {
 	gen.UnimplementedTestServiceServer
 }
 
-func (s TestServiceServer) GetById(ctx context.Context, req *gen.GetByIdReq) (*gen.GetByIdResp, error) {
+func (s TestServiceServer) GetById(_ context.Context, req *gen.GetByIdReq) (*gen.GetByIdResp, error) {
 	fmt.Println(req)
 	return &gen.GetByIdResp{
 		User: &gen.User{

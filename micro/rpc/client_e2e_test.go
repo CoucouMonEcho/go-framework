@@ -263,7 +263,8 @@ func TestTimeOut(t *testing.T) {
 				serviceServer.Msg = "hello, world"
 				serviceServer.sleep = time.Second * 2
 				serviceServer.t = t
-				ctx, _ := context.WithTimeout(context.Background(), time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
 				return ctx
 			},
 			wantResp: &GetByIdResp{},
@@ -293,7 +294,7 @@ type TestServiceServer struct {
 	Msg string
 }
 
-func (t *TestServiceServer) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, error) {
+func (t *TestServiceServer) GetById(_ context.Context, req *GetByIdReq) (*GetByIdResp, error) {
 
 	// do something
 	log.Println(req)
@@ -303,7 +304,7 @@ func (t *TestServiceServer) GetById(ctx context.Context, req *GetByIdReq) (*GetB
 	}, t.Err
 }
 
-func (t *TestServiceServer) GetByIdProto(ctx context.Context, req *gen.GetByIdReq) (*gen.GetByIdResp, error) {
+func (t *TestServiceServer) GetByIdProto(_ context.Context, req *gen.GetByIdReq) (*gen.GetByIdResp, error) {
 
 	// do something
 	log.Println(req)
@@ -327,7 +328,7 @@ type TestServiceServerTimeout struct {
 	Msg   string
 }
 
-func (t *TestServiceServerTimeout) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, error) {
+func (t *TestServiceServerTimeout) GetById(ctx context.Context, _ *GetByIdReq) (*GetByIdResp, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		t.t.Fatal("context deadline should be set")
 	}

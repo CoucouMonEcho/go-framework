@@ -23,10 +23,7 @@ func TestClient_Send(t *testing.T) {
 		t.Log(err)
 	}()
 	time.Sleep(time.Second * 3)
-	c := &Client{
-		network: "tcp",
-		addr:    ":8082",
-	}
+	c := NewClient("tcp", ":8082")
 	resp, err := c.Send("hello world")
 	require.NoError(t, err)
 	require.Equal(t, "hello worldhello world", resp)

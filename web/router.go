@@ -109,7 +109,7 @@ func findMiddlewares(root *node, segs []string) []Middleware {
 			if len(cur.children) > 0 {
 				res = append(res, cur.middlewares...)
 			}
-			curChildren := []*node{}
+			var curChildren []*node
 			for _, curChild := range cur.children {
 				if curChild.path == seg || curChild.nodeType != nodeTypeStatic {
 					curChildren = append(children, curChild)

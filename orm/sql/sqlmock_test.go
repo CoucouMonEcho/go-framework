@@ -13,7 +13,9 @@ import (
 func TestSQLMock(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	mockRows := sqlmock.NewRows([]string{"id", "first_name"}).AddRow(1, "Tom")
 	mock.ExpectQuery("SELECT `id`, `first_name` FROM `user`.*").WillReturnRows(mockRows)

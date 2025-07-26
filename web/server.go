@@ -58,7 +58,7 @@ func ServerWithTemplateEngine(templateEngine TemplateEngine) HTTPServerOption {
 }
 
 func (h *HTTPServer) Use(method string, path string, middlewares ...Middleware) {
-	h.router.addRoute(http.MethodGet, path, nil, middlewares...)
+	h.router.addRoute(method, path, nil, middlewares...)
 }
 
 func (h *HTTPServer) Get(path string, handler Handler) {

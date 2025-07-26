@@ -1,1 +1,2 @@
-var abc = 123
+let abc = 123
+abc++

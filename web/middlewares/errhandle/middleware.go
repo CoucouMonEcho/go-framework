@@ -18,7 +18,7 @@ func (m *MiddlewareBuilder) RegisterError(status int, data []byte) *MiddlewareBu
 	return m
 }
 
-func (m MiddlewareBuilder) Build() web.Middleware {
+func (m *MiddlewareBuilder) Build() web.Middleware {
 	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			next(ctx)

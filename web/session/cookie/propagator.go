@@ -9,13 +9,17 @@ type Propagator struct {
 
 type Option func(*Propagator)
 
-func NewPropagator() *Propagator {
-	return &Propagator{
-		cookieName: "sessid",
+func NewPropagator(opts ...Option) *Propagator {
+	res := &Propagator{
+		cookieName: "session",
 		cookieOption: func(c *http.Cookie) {
 
 		},
 	}
+	for _, opt := range opts {
+		opt(res)
+	}
+	return res
 }
 
 func WithCookieName(name string) Option {

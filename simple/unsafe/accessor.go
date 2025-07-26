@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-type UnsafeAccessor struct {
+type Accessor struct {
 	// address unsafe.Pointer go will help maintain,
 	// and gc still points to the changed address before and after
 	address unsafe.Pointer
@@ -14,7 +14,7 @@ type UnsafeAccessor struct {
 	fields map[string]FieldMeta
 }
 
-func NewUnsafeAccessor(entity any) (*UnsafeAccessor, error) {
+func NewUnsafeAccessor(entity any) (*Accessor, error) {
 	if entity == nil {
 		return nil, errors.New("invalid entity")
 	}
@@ -32,13 +32,13 @@ func NewUnsafeAccessor(entity any) (*UnsafeAccessor, error) {
 		}
 	}
 	// UnsafeAddr will change after gc, UnsafePointer will not
-	return &UnsafeAccessor{
+	return &Accessor{
 		address: reflect.ValueOf(entity).UnsafePointer(),
 		fields:  fields,
 	}, nil
 }
 
-func (a *UnsafeAccessor) Field(field string) (any, error) {
+func (a *Accessor) Field(field string) (any, error) {
 	fd, ok := a.fields[field]
 	if !ok {
 		return nil, errors.New("invalid field")
@@ -52,7 +52,7 @@ func (a *UnsafeAccessor) Field(field string) (any, error) {
 	return reflect.NewAt(fd.typ, fdAddr).Elem().Interface(), nil
 }
 
-func (a *UnsafeAccessor) SetField(field string, val any) error {
+func (a *Accessor) SetField(field string, val any) error {
 	fd, ok := a.fields[field]
 	if !ok {
 		return errors.New("invalid field")

@@ -67,7 +67,7 @@ func (b *BuildInMapCache) Set(ctx context.Context, k string, v any, expire time.
 	return b.set(ctx, k, v, expire)
 }
 
-func (b *BuildInMapCache) set(ctx context.Context, k string, v any, expire time.Duration) error {
+func (b *BuildInMapCache) set(_ context.Context, k string, v any, expire time.Duration) error {
 	var dl time.Time
 	if expire > 0 {
 		dl = time.Now().Add(expire)
@@ -76,7 +76,7 @@ func (b *BuildInMapCache) set(ctx context.Context, k string, v any, expire time.
 	return nil
 }
 
-func (b *BuildInMapCache) Get(ctx context.Context, k string) (any, error) {
+func (b *BuildInMapCache) Get(_ context.Context, k string) (any, error) {
 	b.mutex.RLock()
 	itm, ok := b.data[k]
 	b.mutex.RUnlock()
@@ -99,14 +99,14 @@ func (b *BuildInMapCache) Get(ctx context.Context, k string) (any, error) {
 	return itm.v, nil
 }
 
-func (b *BuildInMapCache) Del(ctx context.Context, k string) error {
+func (b *BuildInMapCache) Del(_ context.Context, k string) error {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	b.delete(k)
 	return nil
 }
 
-func (b *BuildInMapCache) LoadAndDelete(ctx context.Context, k string) (any, error) {
+func (b *BuildInMapCache) LoadAndDelete(_ context.Context, k string) (any, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	itm, ok := b.data[k]
@@ -136,9 +136,8 @@ func (b *BuildInMapCache) Close() error {
 	return nil
 }
 
-func (b *BuildInMapCache) OnEvicted(f func(k string, v any)) {
-	//TODO implement me
-	panic("implement me")
+func (b *BuildInMapCache) OnEvicted(_ func(k string, v any)) {
+	// do nothing
 }
 
 type item struct {

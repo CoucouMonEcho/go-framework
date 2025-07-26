@@ -2,11 +2,13 @@ package micro
 
 import (
 	"code-practise/micro/registry"
+	"code-practise/micro/route"
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 )
 
@@ -17,8 +19,7 @@ type Client struct {
 	r        registry.Registry
 	timeout  time.Duration
 
-	picker string
-	//pickerBuilder base.PickerBuilder
+	bb route.BalancerBuilder
 }
 
 func NewClient(opts ...ClientOption) (*Client, error) {
@@ -42,29 +43,27 @@ func ClientWithRegistry(r registry.Registry, timeout time.Duration) ClientOption
 	}
 }
 
-func ClientWithPickerBuilder(name string, pickerBuilder base.PickerBuilder) ClientOption {
+func ClientWithPickerBuilder(bb route.BalancerBuilder) ClientOption {
 	return func(c *Client) {
-		c.picker = name
-		balancer.Register(base.NewBalancerBuilder("DEMO_ROUND_ROBIN", pickerBuilder, base.Config{HealthCheck: true}))
+		c.bb = bb
 	}
 }
 
-func (c *Client) Dial(ctx context.Context, service string) (*grpc.ClientConn, error) {
-	var opts []grpc.DialOption
+func (c *Client) Dial(_ context.Context, service string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	if c.r != nil {
-		rb, err := NewResolverBuilder(c.r, c.timeout)
-		if err != nil {
-			return nil, err
+		rb := &grpcResolverBuilder{
+			r:       c.r,
+			timeout: c.timeout,
 		}
 		opts = append(opts, grpc.WithResolvers(rb))
 	}
 	if c.insecure {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	if c.picker != "" {
-		//FIXME ???
-		opts = append(opts, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.picker)))
+	if c.bb != nil {
+		balancer.Register(base.NewBalancerBuilder(c.bb.Name(), c.bb, base.Config{HealthCheck: true}))
+		opts = append(opts, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.bb.Name())))
 	}
-	cc, err := grpc.DialContext(ctx, fmt.Sprintf("registry:///%s", service), opts...)
+	cc, err := grpc.NewClient(fmt.Sprintf("registry:///%s", service), opts...)
 	return cc, err
 }

@@ -97,7 +97,7 @@ func (app *App) shutdown() {
 		srv := server
 		go func() {
 			if err := srv.stop(); err != nil {
-				log.Printf("shutdown of service %s failed\n", srv)
+				log.Printf("shutdown of service %v failed\n", srv)
 			}
 			wg.Done()
 		}()

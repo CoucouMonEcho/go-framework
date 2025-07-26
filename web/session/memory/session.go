@@ -4,7 +4,7 @@ import (
 	"code-practise/web/session"
 	"context"
 	"errors"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	"sync"
 	"time"
 )
@@ -36,7 +36,7 @@ func NewStore(expiration time.Duration) *Store {
 	}
 }
 
-func (s *Store) Generate(ctx context.Context, id string) (session.Session, error) {
+func (s *Store) Generate(_ context.Context, id string) (session.Session, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -48,7 +48,7 @@ func (s *Store) Generate(ctx context.Context, id string) (session.Session, error
 	return sess, nil
 }
 
-func (s *Store) Refresh(ctx context.Context, id string) error {
+func (s *Store) Refresh(_ context.Context, id string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -60,7 +60,7 @@ func (s *Store) Refresh(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) Remove(ctx context.Context, id string) error {
+func (s *Store) Remove(_ context.Context, id string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -68,7 +68,7 @@ func (s *Store) Remove(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Store) Get(ctx context.Context, id string) (session.Session, error) {
+func (s *Store) Get(_ context.Context, id string) (session.Session, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -88,7 +88,7 @@ type Session struct {
 	values sync.Map
 }
 
-func (s *Session) Get(ctx context.Context, key string) (any, error) {
+func (s *Session) Get(_ context.Context, key string) (any, error) {
 	val, ok := s.values.Load(key)
 	if !ok {
 		// return nil, fmt.Errorf("%w: %s", errSessionNotFound, key)
@@ -97,7 +97,7 @@ func (s *Session) Get(ctx context.Context, key string) (any, error) {
 	return val, nil
 }
 
-func (s *Session) Set(ctx context.Context, key string, value any) error {
+func (s *Session) Set(_ context.Context, key string, value any) error {
 	s.values.Store(key, value)
 	return nil
 }

@@ -19,7 +19,7 @@ func TestBalancer_Pick(t *testing.T) {
 			name: "start",
 			b: &Balancer{
 				index: -1,
-				conns: []*subConn{
+				connes: []*subConn{
 					{
 						conn: Subconn{name: "127.0.0.1:8080"},
 					},
@@ -27,7 +27,6 @@ func TestBalancer_Pick(t *testing.T) {
 						conn: Subconn{name: "127.0.0.1:8081"},
 					},
 				},
-				length: 2,
 			},
 			wantSubConn:       Subconn{name: "127.0.0.1:8080"},
 			wantBalancerIndex: 0,
@@ -35,8 +34,8 @@ func TestBalancer_Pick(t *testing.T) {
 		{
 			name: "empty",
 			b: &Balancer{
-				index: 1,
-				conns: []*subConn{},
+				index:  1,
+				connes: []*subConn{},
 			},
 			wantErr: balancer.ErrNoSubConnAvailable,
 		},

@@ -68,7 +68,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
 	_ Expression = &Aggregate{}     // 内置函数
 	_ Expression = &Column{}        // 列
 	_ Expression = &Predicate{}     // 查询条件
@@ -96,7 +96,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
   NewSelector[TestModel](db)).Select(Raw("COUNT(DISTINCT `first_name`)").As("name"), Max("Age").As("max"))
       .Where(C("Id").Eq(Raw("`age` + ?", 1).AsPredicate())
   ```
@@ -111,7 +111,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
   NewInserter[TestModel](db).Values(&TestModel{
                   Id:        12,
                   FirstName: "Tom",
@@ -130,7 +130,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
   err := db.DoTx(context.Background(), func(ctx context.Context, tx *Tx) error {
           // do something
           return nil
@@ -154,7 +154,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
   t1 := TableOf(&Order{}).As("t1")
   t2 := TableOf(&OrderDetail{}).As("t2")
   t3 := t1.Join(t2).On(t1.C("Id").Eq(t2.C("OrderId")))
@@ -171,7 +171,7 @@
 
   <details><summary>示例代码</summary>
 
-  ```go
+  ```
   package testdata
   
   import (

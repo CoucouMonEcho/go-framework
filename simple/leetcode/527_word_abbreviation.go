@@ -208,7 +208,8 @@ func quickSort(arr []*height) []*height {
 	}
 
 	pivot := arr[0]
-	left, right := []*height{}, []*height{}
+	var left []*height
+	var right []*height
 
 	for _, v := range arr[1:] {
 		if v.height >= pivot.height {

@@ -1,25 +1,31 @@
 package round_robin
 
 import (
+	"code-practise/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
+	"google.golang.org/grpc/resolver"
 	"math"
 	"sync"
 	"sync/atomic"
 )
 
 type WeightBalancer struct {
-	conns []*weightConn
+	connes []*weightConn
+	filter route.Filter
 }
 
 func (w *WeightBalancer) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
-	if len(w.conns) == 0 {
+	if len(w.connes) == 0 {
 		return balancer.PickResult{}, balancer.ErrNoSubConnAvailable
 	}
 	var totalWeight uint32
 	var res *weightConn
 
-	for _, conn := range w.conns {
+	for _, conn := range w.connes {
+		if w.filter != nil && !w.filter(info, conn.addr) {
+			continue
+		}
 		conn.mutex.Lock()
 		totalWeight += conn.currentWeight
 		conn.currentWeight += conn.efficientWeight
@@ -74,33 +80,41 @@ func (w *WeightBalancer) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 	}, nil
 }
 
-func (w *WeightBalancer) done(conn *weightConn) func(info balancer.DoneInfo) {
+func (w *WeightBalancer) done(_ *weightConn) func(info balancer.DoneInfo) {
 	return func(info balancer.DoneInfo) {
 
 	}
 }
 
+var _ route.BalancerBuilder = &WeightBalancerBuilder{}
+
 type WeightBalancerBuilder struct {
+	Filter route.Filter
 }
 
 func (w *WeightBalancerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	conns := make([]*weightConn, 0, len(info.ReadySCs))
+	connes := make([]*weightConn, 0, len(info.ReadySCs))
 	for conn, connInfo := range info.ReadySCs {
 		//weight, err := strconv.ParseInt(weightStr, 10, 64)
 		//if err != nil {
 		//	panic(err)
 		//}
 		weight := connInfo.Address.Attributes.Value("weight").(uint32)
-		conns = append(conns, &weightConn{
+		connes = append(connes, &weightConn{
 			conn:            conn,
 			weight:          weight,
 			currentWeight:   weight,
 			efficientWeight: weight,
+			addr:            connInfo.Address,
 		})
 	}
 	return &WeightBalancer{
-		conns: conns,
+		connes: connes,
 	}
+}
+
+func (w *WeightBalancerBuilder) Name() string {
+	return "WEIGHT_ROUND_ROBIN"
 }
 
 type weightConn struct {
@@ -109,4 +123,5 @@ type weightConn struct {
 	currentWeight   uint32
 	efficientWeight uint32
 	mutex           sync.Mutex
+	addr            resolver.Address
 }

@@ -23,7 +23,7 @@ func (m *MiddlewareBuilder) LogFunc(logFunc func(log string)) *MiddlewareBuilder
 	return m
 }
 
-func (m MiddlewareBuilder) Build() web.Middleware {
+func (m *MiddlewareBuilder) Build() web.Middleware {
 	return func(next web.Handler) web.Handler {
 		return func(ctx *web.Context) {
 			// finish route handler to get matched route

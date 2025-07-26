@@ -9,7 +9,7 @@ import (
 
 func TestWeightBalancer_Pick(t *testing.T) {
 	b := &WeightBalancer{
-		conns: []*weightConn{
+		connes: []*weightConn{
 			{
 				conn: Subconn{
 					name: "weight-5",
@@ -40,7 +40,7 @@ func TestWeightBalancer_Pick(t *testing.T) {
 	require.NoError(t, err)
 
 	pickRes.Done(balancer.DoneInfo{})
-	assert.Equal(t, uint32(6), b.conns[0].efficientWeight)
+	assert.Equal(t, uint32(6), b.connes[0].efficientWeight)
 
 	pickRes, err = b.Pick(balancer.PickInfo{})
 	require.NoError(t, err)

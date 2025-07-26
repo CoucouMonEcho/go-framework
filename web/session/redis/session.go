@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	// errKeyNotFound sentinel error
-	errorKeyNotFound     = errors.New("key not found")
 	errorSessionNotFound = errors.New("session not found")
 )
 

@@ -3,7 +3,7 @@ package cache
 import "time"
 
 type RetryStrategy interface {
-	// return retry interval and try again
+	// Next return retry interval and try again
 	Next() (time.Duration, bool)
 }
 

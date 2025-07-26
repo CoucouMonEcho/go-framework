@@ -12,7 +12,7 @@ type JsonColumn[
 	Valid bool
 }
 
-func (j JsonColumn[T]) Value() (driver.Value, error) {
+func (j *JsonColumn[T]) Value() (driver.Value, error) {
 	if !j.Valid {
 		return nil, nil
 	}

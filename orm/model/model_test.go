@@ -113,7 +113,7 @@ func Test_registryGet(t *testing.T) {
 					{
 						GoName:  "FirstName",
 						ColName: "first_name",
-						Type:    reflect.TypeOf(string("")),
+						Type:    reflect.TypeOf(""),
 						Offset:  16,
 					},
 					{

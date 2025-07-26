@@ -78,6 +78,7 @@ func (d *Deleter[T]) Build() (*Query, error) {
 	}, nil
 }
 
+// Where
 // id := []int{1, 2, 3}
 // wrong -> s.Where("id in (?, ?, ?)", ids)
 // right -> s.Where("id in (?, ?, ?)", ids...)

@@ -7,7 +7,6 @@ import (
 )
 
 type TemplateEngine interface {
-	// render
 	Render(ctx context.Context, name string, data any) ([]byte, error)
 
 	// middleware could not work
@@ -25,7 +24,7 @@ type GoTemplateEngine struct {
 	T *template.Template
 }
 
-func (gt *GoTemplateEngine) Render(ctx context.Context, name string, data any) ([]byte, error) {
+func (gt *GoTemplateEngine) Render(_ context.Context, name string, data any) ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	err := gt.T.ExecuteTemplate(buffer, name, data)
 	return buffer.Bytes(), err

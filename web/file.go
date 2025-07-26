@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// normally use OSS
+// FileUploader normally use OSS
 type FileUploader struct {
 	FileField   string
 	DstPathFunc func(file *multipart.FileHeader) string
@@ -95,7 +95,7 @@ func (fu *FileUploader) Handle() Handler {
 //	// file upload
 //}
 
-// normally use OSS
+// FileDownloader normally use OSS
 type FileDownloader struct {
 	Dir string
 }

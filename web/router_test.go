@@ -36,38 +36,38 @@ func TestRouter_AddRoute(t *testing.T) {
 
 	wantRouter := router{
 		trees: map[string]*node{
-			http.MethodGet: &node{
+			http.MethodGet: {
 				path:     "/",
 				nodeType: nodeTypeStatic,
 				handler:  mockHandler,
 				children: []*node{
-					&node{
+					{
 						path:     "order",
 						nodeType: nodeTypeStatic,
 						children: []*node{
-							&node{
+							{
 								path:     "detail",
 								nodeType: nodeTypeStatic,
 								handler:  mockHandler,
 								children: []*node{
-									&node{
+									{
 										path:     ":orderId",
 										nodeType: nodeTypeRegular,
 										handler:  mockHandler,
 									},
-									&node{
+									{
 										path:     ":orderId2",
 										nodeType: nodeTypeRegular,
 										handler:  mockHandler,
 									},
 								},
 							},
-							&node{
+							{
 								path:     "*",
 								nodeType: nodeTypeWildcard,
 								handler:  mockHandler,
 								children: []*node{
-									&node{
+									{
 										path:     ":id",
 										nodeType: nodeTypePathParam,
 										handler:  mockHandler,
@@ -99,8 +99,8 @@ func TestRouter_getRoute(t *testing.T) {
 		info      *matchInfo
 	}{
 		{"method not exist", http.MethodOptions, "/order/detail", false, nil},
-		{"static", http.MethodGet, "/order/detail", true, &matchInfo{node: &node{path: "detail", nodeType: nodeTypeStatic, handler: mockHandler, children: []*node{&node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}}}}},
-		{"wild card", http.MethodGet, "/order/aaa", true, &matchInfo{node: &node{path: "*", nodeType: nodeTypeWildcard, handler: mockHandler, children: []*node{&node{path: ":id", nodeType: nodeTypePathParam, handler: mockHandler}}}}},
+		{"static", http.MethodGet, "/order/detail", true, &matchInfo{node: &node{path: "detail", nodeType: nodeTypeStatic, handler: mockHandler, children: []*node{{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}}}}},
+		{"wild card", http.MethodGet, "/order/aaa", true, &matchInfo{node: &node{path: "*", nodeType: nodeTypeWildcard, handler: mockHandler, children: []*node{{path: ":id", nodeType: nodeTypePathParam, handler: mockHandler}}}}},
 		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{node: &node{path: ":orderId", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId": "123o"}}},
 		{"path param", http.MethodGet, "/order/detail/123o", true, &matchInfo{node: &node{path: ":orderId2", nodeType: nodeTypeRegular, handler: mockHandler}, pathParams: map[string]string{"orderId2": "123o"}}},
 	}
@@ -118,14 +118,14 @@ func TestRouter_getRoute(t *testing.T) {
 	}
 }
 
-func (r1 *router) equal(r2 *router) (string, bool) {
-	if r1 == r2 {
+func (r *router) equal(r2 *router) (string, bool) {
+	if r == r2 {
 		return "", true
 	}
-	if len(r1.trees) != len(r2.trees) {
+	if len(r.trees) != len(r2.trees) {
 		return "can not found method", false
 	}
-	for k, v := range r1.trees {
+	for k, v := range r.trees {
 		dst, ok := r2.trees[k]
 		if !ok {
 			return "can not found method", false
@@ -138,23 +138,23 @@ func (r1 *router) equal(r2 *router) (string, bool) {
 	return "", true
 }
 
-func (n1 *node) equal(n2 *node) (string, bool) {
-	if n1 == n2 {
+func (n *node) equal(n2 *node) (string, bool) {
+	if n == n2 {
 		return "", true
 	}
-	if n1.path != n2.path {
+	if n.path != n2.path {
 		return "path not match", false
 	}
-	if len(n1.children) != len(n2.children) {
+	if len(n.children) != len(n2.children) {
 		return "children len not match", false
 	}
-	if n1.nodeType != n2.nodeType {
+	if n.nodeType != n2.nodeType {
 		return "node type not match", false
 	}
-	if reflect.ValueOf(n1.handler) != reflect.ValueOf(n2.handler) {
+	if reflect.ValueOf(n.handler) != reflect.ValueOf(n2.handler) {
 		return "handler not match", false
 	}
-	for _, n1Child := range n1.children {
+	for _, n1Child := range n.children {
 		found := false
 		var msg string
 		var ok bool

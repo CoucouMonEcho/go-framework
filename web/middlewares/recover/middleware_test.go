@@ -3,6 +3,7 @@ package recover
 import (
 	"code-practise/web"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
 )
@@ -20,5 +21,6 @@ func TestMiddlewareBuilder_Build(t *testing.T) {
 	server.Get("/user", func(ctx *web.Context) {
 		panic("panic")
 	})
-	server.Start(":8081")
+	err := server.Start(":8081")
+	require.NoError(t, err)
 }
