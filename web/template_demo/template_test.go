@@ -23,7 +23,7 @@ func TestHelloWorld(t *testing.T) {
 	// 	 Name string
 	// }
 	// err = tpl.Execute(buffer, user{Name: "John"})
-	// err = tpl.Execute(buffer, map[string]interface{}{"Name": "John"})
+	// err = tpl.Execute(buffer, map[string]any{"Name": "John"})
 	// err = tpl.Execute(buffer, 123)
 
 	err = tpl.Execute(buffer, []string{"John"})
@@ -46,7 +46,7 @@ Hello, {{.Hello "Tom" "John"}}
 	// 	 Name string
 	// }
 	// err = tpl.Execute(buffer, user{Name: "John"})
-	// err = tpl.Execute(buffer, map[string]interface{}{"Name": "John"})
+	// err = tpl.Execute(buffer, map[string]any{"Name": "John"})
 	// err = tpl.Execute(buffer, 123)
 
 	err = tpl.Execute(buffer, funcCall{Slice: []string{"1", "2", "3"}})
