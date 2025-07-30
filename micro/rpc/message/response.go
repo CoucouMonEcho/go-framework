@@ -15,6 +15,7 @@ type Response struct {
 
 	Error []byte
 
+	// Data use any can not confirm type
 	Data []byte
 }
 

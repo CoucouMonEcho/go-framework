@@ -29,11 +29,11 @@
 ### 1.3. Middleware中间件
 
 - [x] 重写路由查找、支持节点级别的Middleware[^2]；
-- [x] `AccessLog`记录请求日志；
-- [x] `OpenTelemetry`接入可观测性链路；
-- [x] `Prometheus`实现性能监控；
-- [x] `Errhandle`返回错误页面；
-- [x] `Recover`支持从错误中恢复。
+- [x] 接入`AccessLog`记录请求日志；
+- [x] 接入`OpenTelemetry`可观测性链路；
+- [x] 接入`Prometheus`实现性能监控；
+- [x] 接入`Errhandle`返回错误页面；
+- [x] 接入`Recover`支持从错误中恢复。
 
   [^2]: 匹配路由二次查找Middleware，效率较差；若提前将Middleware部署在路由树中性能更好，但会额外引入大量复杂代码。
 
@@ -53,8 +53,8 @@
 ### 1.6. Session会话管理
 
 - [x] 提取`Session`会话、`Store`存储、`Propagator`操作浏览器`Cookie`抽象；
-- [x] 基于内存和`redis`的两种服务器存储实现；
-- [x] `SessionManager`胶水框架，暴露对外接口。
+- [x] 基于内存和redis的两种服务器存储实现；
+- [x] 提供`SessionManager`胶水框架，暴露对外接口。
 
 ---
 
@@ -141,12 +141,12 @@
 
 ### 2.6. Middleware中间件
 
-- [x] `QueryLog`记录操作日志；
-- [x] `OpenTelemetry`接入可观测性链路；
-- [x] `Prometheus`实现性能监控；
-- [x] `NoDelete`禁用删除语句；
-- [x] `SafeDML`禁用不使用查询条件的更新/删除；
-- [x] `SlowQuery`记录慢查询。
+- [x] 接入`QueryLog`记录操作日志；
+- [x] 接入`OpenTelemetry`可观测性链路；
+- [x] 接入`Prometheus`实现性能监控；
+- [x] 接入`NoDelete`禁用删除语句；
+- [x] 接入`SafeDML`禁用不使用查询条件的更新/删除；
+- [x] 接入`SlowQuery`记录慢查询。
 
 ### 2.7. JOIN查询
 
@@ -167,7 +167,7 @@
 
 ### 2.8. AST生成模板代码
 
-- [x] 使用AST抽象语法树与模板引擎、生成脚手架代码。
+- [x] 基于AST抽象语法树与模板引擎、生成脚手架代码。
 
   <details><summary>示例代码</summary>
 
@@ -196,7 +196,8 @@
 
 ### 2.9. Subquery子查询
 
-- [x] 实现嵌套子查询，但编写复杂查询语句时更建议使用`RawQuery`。
+- [x] 支持子查询，编写复杂查询语句时建议使用`RawQuery`；
+- [ ] 子查询作为表达式、条件、字段、表构建SQL，支持嵌套。
 
 ---
 
@@ -204,11 +205,40 @@
 
 ### 3.1. Memory本地缓存
 
-### 3.2. Redis缓存
+- [x] 本地内存缓存，支持最大内存数[^6]、最大键值对限制；
+- [x] 读时删除过期数据、开启单个goroutine随机删除部分已过期缓存。
 
-### 3.3. 缓存容量限制
+  [^6]: 基于unsafe，无法准确获取指针引用、嵌套结构体的实际大小。
 
-### 3.4. 一致性问题与解决
+### 3.2. Redis与分布式锁
+
+- [x] 支持redis缓存、基于Lua脚本实现分布式锁；
+- [x] 自动续约：定时续约、锁超时续约，ctx链路超时、解锁时退出；
+- [x] 重试策略：迭代器形态，用于用户自定义拓展和重写；
+- [x] 支持`SingleFlightLock`：本地goroutine先竞争，胜者竞争分布式锁；
+- [ ] `RedLock`：多票表决机制，强一致性、性能影响较大。
+
+### 3.3. 缓存模式[^7]
+
+- [x] 支持`ReadThrough`模式：装饰器模式重写`Get`方法，读无数据时同步/异步读数据源刷新缓存；
+- [x] 支持`WriteThrough`模式：装饰器模式重写`Set`方法，写数据时同步/异步写数据源刷新缓存；
+- [ ] `WriteBack`模式：只对缓存进行读写，缓存过期时利用`OnEvicted`刷新数据源(业务相关)；
+- [ ] `Refresh-ahead`模式：监听数据源数据变更事件自动刷新缓存，如`Canal`(业务相关)；
+
+  [^7]: 缓存模式无法解决一致性问题，WriteBack表现好，但安全性低。
+
+### 3.4. 缓存三大问题与解决
+
+- [x] `BloomFilterCache`：增强`ReadThrough`缓存，布隆过滤器，解决缓存穿透；
+- [x] `BloomFilterCache`：增强`ReadThrough`缓存，布隆过滤器，解决缓存穿透；
+- [x] `SingleFlightCache`：基于`ReadThrough`缓存，读无数据时仅允许单个goroutine查询数据源，解决缓存击穿；
+- [x] `RandomExpirationCache`：装饰器模式，随机缓存时间，解决缓存雪崩。
+
+### 3.5. 缓存一致性
+
+- [ ] 并发更新：分布式锁、部分失败：分布式事务，一致性问题本质上无解；
+- [ ] 方案1：一致性哈希确保请求打到同一台机器(扩容、缩容、重启时可能存在一致性问题)；
+- [ ] 方案2：分布式锁与single_flight分段式加锁，确保单实例只有一个goroutine参与全局锁竞争；
 
 ---
 
@@ -216,13 +246,119 @@
 
 ### 4.1. Pool连接池
 
+- [x] 参考java中的线程池实现的连接池，支持范型、可管理任意类型连接；
+
+  <details><summary>示例代码</summary>
+
+  ```
+  type Config struct {
+      InitialCap  int                   // 初始连接数
+      MaxCap      int                   // 最大连接数
+      MaxIdle     int                   // 最大空闲连接数
+      IdleTimeout time.Duration         // 最长空闲时间
+      Factory     func() (any, error)   // 连接工厂
+      Close       func(conn any) error  // 拒绝策略
+  }
+  ```
+
+  </details>
+
+- [x] `Get`：有空闲连接时获取，无空闲连接且未达到最大连接数时创建新连接，否则尝试放入请求队列；
+- [x] `Put`：尝试获取请求队列，若请求队列为空则尝试归入空闲连接，失败则关闭连接。
+
 ### 4.2. RPC协议
 
-### 4.3. Etcd注册发现
+- [x] 支持代理实现简易rpc协议，包含可携带元数据的变长请求头、可携带错误信息的变长响应头；
 
-### 4.4. 负载均衡
+  <details><summary>示例代码</summary>
 
-### 4.5. Cluster集群
+  ```
+  type Request struct {
+      // header                             // 请求头
+      HeadLength uint32                     // 固定长度 head长度
+      BodyLength uint32                     // 固定长度 body长度
+      MessageId  uint32                     // 固定长度 消息id
+      Version    uint8                      // 固定长度 版本号
+      Compressor uint8                      // 固定长度 压缩算法
+      Serializer uint8                      // 固定长度 序列化协议
+  
+      ServiceName string                    // 可变长度 服务名
+      MethodName  string                    // 可变长度 方法名
+  
+      Meta map[string]string                // 可变长度 元数据
+  
+      // Data use any can not confirm type  // 请求体
+      Data []byte                           // 可变长度 请求体
+  }
 
-### 4.6. 可用性与可观测性
+  type Response struct {
+      // header                             // 请求头
+      HeadLength uint32                     // 固定长度 head长度
+      BodyLength uint32                     // 固定长度 body长度
+      MessageId  uint32                     // 固定长度 消息id
+      Version    uint8                      // 固定长度 版本号
+      Compressor uint8                      // 固定长度 压缩算法
+      Serializer uint8                      // 固定长度 序列化协议
+  
+      Error []byte                          // 可变长度 error
+  
+      // Data use any can not confirm type  // 请求体
+      Data []byte                           // 可变长度 请求体
+  }
+  
+  ```
 
+  </details>
+
+- [x] 支持json、proto以及用户自定义序列化协议；
+- [x] 支持gzip以及用户自定义压缩算法，默认不压缩；
+- [x] `client`使用了上述连接池，用于管理和复用tcp连接；
+- [x] 没有必要支持异步、回调，用户可自行利用goroutine、sync包实现；
+- [x] 支持one-way调用，服务端异步处理直接返回；
+- [x] 支持链路超时控制，超时后框架不应该中断业务，中断应该由业务本身处理。
+
+### 4.3. 注册中心
+
+  <details><summary>示例代码</summary>
+
+  ```  
+  type Registry interface {
+      Register(ctx context.Context, si ServiceInstance) error
+      UnRegister(ctx context.Context, si ServiceInstance) error
+      ListServices(ctx context.Context, name string) ([]ServiceInstance, error)
+      Subscribe(name string) (<-chan Event, error)
+      io.Closer
+  }
+  ```
+
+  </details>
+
+- [x] 基于本地内存的简易注册中心，用于测试；
+- [x] 支持etcd服务注册：基于etcd租约API实现注册中心，服务启动时机由用户调用`Start`方法决定；
+- [x] 支持grpc服务发现：启动时从注册中心拉取全部服务信息，持续监听etcd中服务变化、全量更新服务信息；
+- [x] 服务端-注册中心连接失败：连接基于服务端主动续约，受租约长短、重试机制影响，重试失败后注册中心通知客户端；
+- [x] 客户端-注册中心连接失败：解决方案为停止服务(CP)或使用本地缓存数据连接服务端(AP)；
+- [x] 客户端-服务端连接失败：暂时将服务端从节点列表剔除，后续考虑恢复；
+- [ ] 无法获取容器地址：只能考虑使用容器专属注册与发现方式、容器使用宿主机网络或启动时将宿主机IP作为环境变量注入。
+
+### 4.4. 负载均衡、路由和集群
+
+- [x] 支持静态负载均衡策略：轮询、加权(平滑)轮询、随机、加权随机、哈希、~~一致性哈希~~(实现困难)；
+- [x] 支持动态负载均衡策略：最快响应时间、最少连接数、最少请求数[^8]；
+- [x] 支持路由策略：服务端在注册中心额外注册分组信息，实现分组路由，路由会影响负载均衡的准确性；
+- [x] 支持cluster集群：解决换节点重试(轮询或grpc重试)、快速失败、广播、组播功能；
+- [ ] 理论上，发起调用后的结果需要反馈给服务发现组件、cluster组件、路由组件和负载均衡组件(绝大多数微服务框架并不支持)。
+
+  [^8]: 不借助网关或第三方中间件的客户端负载均衡策略并不准确。
+
+### 4.5. 可用性与可观测性[^9]
+
+- [x] 支持静态故障检测算法：令牌桶、漏桶、固定窗口和滑动窗口；
+- [ ] 动态故障检测算法：根据服务状态动态判断，如错误率、响应时间、或BBR算法；
+- [x] 支持基于本地内存的单机限流、基于redis的集群限流；
+- [ ] 拒绝策略：快路径、返回固定响应、缓存请求、转为异步、转发到其他服务器(与业务相关)；
+- [x] 限流请求只走快路径/简易路径(基于redis的滑动窗口算法)；
+- [ ] 接入`Metrics`，记录请求数、错误数、响应时间。
+- [ ] 接入`OpenTelemetry`可观测性链路；
+
+  [^9]: 熔断、限流、降级本质上都是故障处理策略(故障检测-故障处理-故障恢复)。
