@@ -1,8 +1,6 @@
-# Code Practise
+# go-framework
 
----
-
-## 1. Go Web框架
+## 1. Web
 
 ### 1.1. Router路由
 
@@ -18,13 +16,9 @@
 - [x] 存储url参数、路径参数、请求体、表单参数；
 - [x] 封装`StringValue`，支持返回值类型转化语法糖。
 
-  <details><summary>示例代码</summary>
-
   ```
     req, err := ctx.QueryValue("file").String()
   ```
-
-  </details>
 
 ### 1.3. Middleware中间件
 
@@ -56,17 +50,13 @@
 - [x] 基于内存和redis的两种服务器存储实现；
 - [x] 提供`SessionManager`胶水框架，暴露对外接口。
 
----
-
-## 2. Go Orm框架
+## 2. Orm
 
 ### 2.1. SQL语句
 
 - [x] `QueryBuilder`作为构建SQL语句的顶级抽象，封装预编译的SQL语句和参数`Query`；
 - [x] `Querier`抽象用于`SELECT`语句，`Executor`抽象用于`INSERT`、`UPDATE`、`INSERT`语句；
 - [x] `Expression`是所有不同类型SQL部分拼接的标记接口；
-
-  <details><summary>示例代码</summary>
 
   ```
 	_ Expression = &Aggregate{}     // 内置函数
@@ -77,8 +67,6 @@
 	_ Expression = &Subquery{}      // 子查询
 	_ Expression = &SubqueryExpr{}  // 子查询表达式
   ```
-
-  </details>
 
 - [x] 支持基础的DML语句和`WHERE`、`FROM`等关键字以及`NOT`等运算符。
 
@@ -94,22 +82,16 @@
 
 - [x] 支持聚合函数、别名、原生表达式。
 
-  <details><summary>示例代码</summary>
-
   ```
   NewSelector[TestModel](db)).Select(Raw("COUNT(DISTINCT `first_name`)").As("name"), Max("Age").As("max"))
       .Where(C("Id").Eq(Raw("`age` + ?", 1).AsPredicate())
   ```
-
-  </details>
 
 ### 2.4. UPSERT实现
 
 - [x] 引入方言抽象`Dialect`，默认使用MySQL，暴露`option`方法供外界修改；
 - [x] 替换所有反引号、提供公共方法`buildUpsert`，实现不同数据库下的`upsert`语句；
 - [x] `UpsertBuilder`作为`Inserter`的中间链式调用，提供专属方法`Update`。
-
-  <details><summary>示例代码</summary>
 
   ```
   NewInserter[TestModel](db).Values(&TestModel{
@@ -122,13 +104,9 @@
                   Assign("Age", 5))
   ```
 
-  </details>
-
 ### 2.5. Transaction事务
 
 - [x] 抽象`Session`会话，将原有的`DB`作为实现，增加`Tx`实现，封装`DoTx`闭包方法。
-
-  <details><summary>示例代码</summary>
 
   ```
   err := db.DoTx(context.Background(), func(ctx context.Context, tx *Tx) error {
@@ -136,8 +114,6 @@
           return nil
       }, &sql.TxOptions{})
   ```
-
-  </details>
 
 ### 2.6. Middleware中间件
 
@@ -152,8 +128,6 @@
 
 - [x] 支持`JOIN`查询。
 
-  <details><summary>示例代码</summary>
-
   ```
   t1 := TableOf(&Order{}).As("t1")
   t2 := TableOf(&OrderDetail{}).As("t2")
@@ -163,13 +137,9 @@
   s := NewSelector[Order](db).From(t5)
   ```
 
-  </details>
-
 ### 2.8. AST生成模板代码
 
 - [x] 基于AST抽象语法树与模板引擎、生成脚手架代码。
-
-  <details><summary>示例代码</summary>
 
   ```
   package testdata
@@ -192,13 +162,9 @@
   ...
   ```
 
-  </details>
-
 ### 2.9. Subquery子查询
 
 - [x] 子查询作为表达式、条件、字段、表构建SQL，支持嵌套，编写复杂查询语句时建议使用`RawQuery`。
-
-  <details><summary>示例代码</summary>
 
   ```
   _ TableReference = &Subquery{}
@@ -206,11 +172,7 @@
   _ Expression     = &SubqueryExpr{}
   ```
 
-  </details>
-
----
-
-## 3. Go Cache框架
+## 3. Cache
 
 ### 3.1. Memory本地缓存
 
@@ -250,15 +212,11 @@
   [^9]: 一致性问题的根源：并发更新(分布式锁)、部分失败(分布式事务)，一致性问题本质上无解。
   [^10]: 另一方案为一致性哈希，确保请求打到同一台机器，仅在扩容、缩容、重启时可能存在一致性问题。
 
----
-
-## 4. Go Micro框架
+## 4. Micro
 
 ### 4.1. Pool连接池
 
 - [x] 参考java中的线程池实现的连接池，支持范型、可管理任意类型连接；
-
-  <details><summary>示例代码</summary>
 
   ```
   type Config struct {
@@ -271,16 +229,12 @@
   }
   ```
 
-  </details>
-
 - [x] `Get`：有空闲连接时获取，无空闲连接且未达到最大连接数时创建新连接，否则尝试放入请求队列；
 - [x] `Put`：尝试获取请求队列，若请求队列为空则尝试归入空闲连接，失败则关闭连接。
 
 ### 4.2. RPC协议
 
 - [x] 支持代理实现简易rpc协议，包含可携带元数据的变长请求头、可携带错误信息的变长响应头；
-
-  <details><summary>示例代码</summary>
 
   ```
   type Request struct {
@@ -318,8 +272,6 @@
   
   ```
 
-  </details>
-
 - [x] 支持json、proto以及用户自定义序列化协议；
 - [x] 支持gzip以及用户自定义压缩算法，默认不压缩；
 - [x] `client`使用连接池，用于管理和复用tcp连接；
@@ -332,8 +284,6 @@
 
 - [x] 支持服务注册：基于`etcd`租约API实现注册中心，服务启动时机由用户调用`Start`方法决定；
 
-  <details><summary>示例代码</summary>
-
   ```  
   type Registry interface {
       Register(ctx context.Context, si ServiceInstance) error
@@ -344,9 +294,7 @@
   }
   ```
 
-  </details>
-
-- [x] 支持服务发现：基于`grpc.resolver`，启动时从注册中心拉取全部服务信息，持续监听etcd中服务变化、全量更新服务信息[^12]；
+- [x] 支持服务发现：基于`grpc.resolver`，启动时从注册中心拉取全部服务信息，持续监听`etcd`中服务变化、全量更新服务信息[^12]；
 - [x] 服务端-注册中心连接失败：连接基于服务端主动续约，受租约长短、重试机制影响，重试失败后注册中心通知客户端；
 - [x] 客户端-注册中心连接失败：解决方案为停止服务(CP)或使用本地缓存数据连接服务端(AP)；
 - [x] 客户端-服务端连接失败：暂时将服务端从节点列表剔除，后续考虑恢复。
