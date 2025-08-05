@@ -1,10 +1,10 @@
 package orm
 
 import (
-	"code-practise/orm/internal/errs"
-	"code-practise/orm/model"
 	"context"
 	"database/sql"
+	"go-framework/orm/internal/errs"
+	"go-framework/orm/model"
 )
 
 type Assignable interface {

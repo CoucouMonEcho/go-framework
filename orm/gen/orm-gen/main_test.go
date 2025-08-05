@@ -13,7 +13,7 @@ import (
 //	assert.Equal(t, `package testdata
 //
 //import (
-//	"code-practise/orm"
+//	"go-framework/orm"
 //	sql "database/sql"
 //)`, buffer.String())
 //}

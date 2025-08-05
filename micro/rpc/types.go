@@ -1,8 +1,8 @@
 package rpc
 
 import (
-	"code-practise/micro/rpc/message"
 	"context"
+	"go-framework/micro/rpc/message"
 )
 
 type Service interface {

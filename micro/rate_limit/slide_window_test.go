@@ -1,11 +1,11 @@
 package rate_limit
 
 import (
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro/rpc/proto/gen"
 	"google.golang.org/grpc"
 	"testing"
 	"time"

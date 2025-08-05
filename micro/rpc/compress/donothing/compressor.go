@@ -1,6 +1,6 @@
 package donothing
 
-import "code-practise/micro/rpc/compress"
+import "go-framework/micro/rpc/compress"
 
 var _ compress.Compressor = &Compressor{}
 

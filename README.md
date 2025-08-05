@@ -145,7 +145,7 @@
   package testdata
   
   import (
-      "code-practise/orm"
+      "go-framework/orm"
       "database/sql"
   )
   

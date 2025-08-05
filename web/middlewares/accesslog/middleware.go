@@ -1,9 +1,9 @@
 package accesslog
 
 import (
-	"code-practise/web"
 	"encoding/json"
 	"fmt"
+	"go-framework/web"
 )
 
 type MiddlewareBuilder struct {

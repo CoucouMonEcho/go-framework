@@ -4,8 +4,8 @@
 package session
 
 import (
-	"code-practise/web"
 	"github.com/google/uuid"
+	"go-framework/web"
 )
 
 type Manager struct {

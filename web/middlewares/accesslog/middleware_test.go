@@ -1,8 +1,8 @@
 package accesslog
 
 import (
-	"code-practise/web"
 	"fmt"
+	"go-framework/web"
 	"log"
 	"net/http/httptest"
 	"testing"

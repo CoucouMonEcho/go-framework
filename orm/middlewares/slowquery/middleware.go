@@ -1,8 +1,8 @@
 package querylog
 
 import (
-	"code-practise/orm"
 	"context"
+	"go-framework/orm"
 	"log"
 	"time"
 )

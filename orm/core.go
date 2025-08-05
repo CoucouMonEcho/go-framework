@@ -1,9 +1,9 @@
 package orm
 
 import (
-	"code-practise/orm/internal/accessor"
-	"code-practise/orm/model"
 	"context"
+	"go-framework/orm/internal/accessor"
+	"go-framework/orm/model"
 )
 
 type core struct {

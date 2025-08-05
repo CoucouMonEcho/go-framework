@@ -1,13 +1,13 @@
 package rate_limit
 
 import (
-	"code-practise/micro/rate_limit/mocks"
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro/rate_limit/mocks"
+	"go-framework/micro/rpc/proto/gen"
 	"google.golang.org/grpc"
 	"testing"
 	"time"

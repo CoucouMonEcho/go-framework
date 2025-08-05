@@ -1,8 +1,8 @@
 package accessor
 
 import (
-	"code-practise/orm/model"
 	"database/sql"
+	"go-framework/orm/model"
 )
 
 var (

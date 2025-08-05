@@ -1,9 +1,9 @@
 package broadcast
 
 import (
-	"code-practise/micro/registry"
 	"context"
 	"fmt"
+	"go-framework/micro/registry"
 	"google.golang.org/grpc"
 	"reflect"
 	"sync"

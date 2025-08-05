@@ -1,9 +1,9 @@
 package recover
 
 import (
-	"code-practise/web"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"go-framework/web"
 	"net/http"
 	"testing"
 )

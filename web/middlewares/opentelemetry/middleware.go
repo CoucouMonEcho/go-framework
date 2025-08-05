@@ -1,14 +1,14 @@
 package opentelemetry
 
 import (
-	"code-practise/web"
+	"go-framework/web"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const instrumentationName = "code-practise/web/middlewares/opentelemetry"
+const instrumentationName = "go-framework/web/middlewares/opentelemetry"
 
 type MiddlewareBuilder struct {
 	Tracer trace.Tracer

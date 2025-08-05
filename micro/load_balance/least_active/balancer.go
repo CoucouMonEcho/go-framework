@@ -1,7 +1,7 @@
 package least_active
 
 import (
-	"code-practise/micro/route"
+	"go-framework/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"math"

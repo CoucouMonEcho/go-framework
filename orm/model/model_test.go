@@ -1,9 +1,9 @@
 package model
 
 import (
-	"code-practise/orm/internal/errs"
 	"database/sql"
 	"github.com/stretchr/testify/assert"
+	"go-framework/orm/internal/errs"
 	"reflect"
 	"testing"
 )

@@ -1,12 +1,12 @@
 package cache
 
 import (
-	"code-practise/cache/mocks"
 	"context"
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"go-framework/cache/mocks"
 	"testing"
 	"time"
 )

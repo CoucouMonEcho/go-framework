@@ -1,10 +1,10 @@
 package etcd
 
 import (
-	"code-practise/micro/registry"
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-framework/micro/registry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"sync"

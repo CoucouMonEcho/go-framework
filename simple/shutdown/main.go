@@ -1,8 +1,8 @@
 package main
 
 import (
-	"code-practise/simple/shutdown/service"
 	"context"
+	"go-framework/simple/shutdown/service"
 	"log"
 	"net/http"
 )

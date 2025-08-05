@@ -1,9 +1,9 @@
 package accessor
 
 import (
-	"code-practise/orm/internal/errs"
-	"code-practise/orm/model"
 	"database/sql"
+	"go-framework/orm/internal/errs"
+	"go-framework/orm/model"
 	"reflect"
 	"unsafe"
 )

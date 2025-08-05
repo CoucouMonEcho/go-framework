@@ -4,11 +4,11 @@
 package test
 
 import (
-	"code-practise/web"
-	"code-practise/web/session"
-	"code-practise/web/session/cookie"
-	"code-practise/web/session/memory"
 	"github.com/stretchr/testify/require"
+	"go-framework/web"
+	"go-framework/web/session"
+	"go-framework/web/session/cookie"
+	"go-framework/web/session/memory"
 	"log"
 	"net/http"
 	"testing"

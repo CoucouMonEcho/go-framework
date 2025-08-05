@@ -1,13 +1,13 @@
 package orm
 
 import (
-	"code-practise/orm/internal/errs"
 	"context"
 	"database/sql"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/orm/internal/errs"
 	"testing"
 )
 

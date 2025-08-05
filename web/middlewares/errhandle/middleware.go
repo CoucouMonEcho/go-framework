@@ -1,6 +1,6 @@
 package errhandle
 
-import "code-practise/web"
+import "go-framework/web"
 
 type MiddlewareBuilder struct {
 	// static page

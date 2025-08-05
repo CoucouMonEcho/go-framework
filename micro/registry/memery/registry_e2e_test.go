@@ -1,11 +1,11 @@
 package memery
 
 import (
-	"code-practise/micro"
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro"
+	"go-framework/micro/rpc/proto/gen"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

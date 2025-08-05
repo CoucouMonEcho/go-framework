@@ -1,10 +1,10 @@
 package memory
 
 import (
-	"code-practise/web/session"
 	"context"
 	"errors"
 	"github.com/patrickmn/go-cache"
+	"go-framework/web/session"
 	"sync"
 	"time"
 )

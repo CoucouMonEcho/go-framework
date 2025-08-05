@@ -2,9 +2,9 @@ package gzip
 
 import (
 	"bytes"
-	"code-practise/micro/rpc/compress"
 	"errors"
 	"github.com/klauspost/compress/gzip"
+	"go-framework/micro/rpc/compress"
 	"io"
 )
 

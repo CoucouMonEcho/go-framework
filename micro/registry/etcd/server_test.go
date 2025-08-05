@@ -1,11 +1,11 @@
 package etcd
 
 import (
-	"code-practise/micro"
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro"
+	"go-framework/micro/rpc/proto/gen"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"testing"
 )

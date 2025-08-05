@@ -3,7 +3,7 @@
 package opentelemetry
 
 import (
-	"code-practise/web"
+	"go-framework/web"
 	"go.opentelemetry.io/otel"
 	"testing"
 	"time"

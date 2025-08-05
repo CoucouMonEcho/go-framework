@@ -1,14 +1,14 @@
 package rpc
 
 import (
-	"code-practise/micro/rpc/compress/gzip"
-	"code-practise/micro/rpc/proto/gen"
-	"code-practise/micro/rpc/serialize/json"
-	"code-practise/micro/rpc/serialize/proto"
 	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro/rpc/compress/gzip"
+	"go-framework/micro/rpc/proto/gen"
+	"go-framework/micro/rpc/serialize/json"
+	"go-framework/micro/rpc/serialize/proto"
 	"log"
 	"sync"
 	"testing"

@@ -1,12 +1,12 @@
 package accessor
 
 import (
-	"code-practise/orm/model"
 	"database/sql"
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/orm/model"
 	"testing"
 )
 

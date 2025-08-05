@@ -1,7 +1,7 @@
 package model
 
 import (
-	"code-practise/orm/internal/errs"
+	"go-framework/orm/internal/errs"
 	"reflect"
 	"regexp"
 	"strings"

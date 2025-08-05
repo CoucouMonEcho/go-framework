@@ -1,8 +1,8 @@
 package memery
 
 import (
-	"code-practise/micro/registry"
 	"context"
+	"go-framework/micro/registry"
 	"sync"
 )
 

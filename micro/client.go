@@ -1,10 +1,10 @@
 package micro
 
 import (
-	"code-practise/micro/registry"
-	"code-practise/micro/route"
 	"context"
 	"fmt"
+	"go-framework/micro/registry"
+	"go-framework/micro/route"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"

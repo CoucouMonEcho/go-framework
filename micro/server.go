@@ -1,8 +1,8 @@
 package micro
 
 import (
-	"code-practise/micro/registry"
 	"context"
+	"go-framework/micro/registry"
 	"google.golang.org/grpc"
 	"net"
 	"time"

@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"code-practise/cache/mocks"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go-framework/cache/mocks"
 	"log"
 	"testing"
 	"time"

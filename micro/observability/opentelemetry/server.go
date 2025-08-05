@@ -13,7 +13,7 @@ import (
 	"net"
 )
 
-const instrumentationName = "code-practise/micro/observability/opentelemetry"
+const instrumentationName = "go-framework/micro/observability/opentelemetry"
 
 type ServerOpenTelemetryBuilder struct {
 	Tracer trace.Tracer

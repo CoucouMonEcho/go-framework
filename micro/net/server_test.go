@@ -1,10 +1,10 @@
 package net
 
 import (
-	"code-practise/micro/net/mocks"
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go-framework/micro/net/mocks"
 	"net"
 	"testing"
 )

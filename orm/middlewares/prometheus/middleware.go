@@ -1,9 +1,9 @@
 package prometheus
 
 import (
-	"code-practise/orm"
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
+	"go-framework/orm"
 	"time"
 )
 

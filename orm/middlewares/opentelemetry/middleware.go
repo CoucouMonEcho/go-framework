@@ -1,15 +1,15 @@
 package opentelemetry
 
 import (
-	"code-practise/orm"
 	"context"
 	"fmt"
+	"go-framework/orm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const instrumentationName = "code-practise/orm/middlewares/opentelemetry"
+const instrumentationName = "go-framework/orm/middlewares/opentelemetry"
 
 type MiddlewareBuilder struct {
 	Tracer trace.Tracer

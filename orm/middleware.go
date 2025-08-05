@@ -1,8 +1,8 @@
 package orm
 
 import (
-	"code-practise/orm/model"
 	"context"
+	"go-framework/orm/model"
 )
 
 type QueryContext struct {

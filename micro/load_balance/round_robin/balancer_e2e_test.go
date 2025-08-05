@@ -1,10 +1,10 @@
 package round_robin
 
 import (
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro/rpc/proto/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"

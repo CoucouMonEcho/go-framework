@@ -1,8 +1,8 @@
 package broadcast
 
 import (
-	"code-practise/micro/registry"
 	"context"
+	"go-framework/micro/registry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

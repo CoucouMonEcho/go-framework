@@ -1,7 +1,7 @@
 package round_robin
 
 import (
-	"code-practise/micro/route"
+	"go-framework/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/resolver"

@@ -1,8 +1,8 @@
 package prometheus
 
 import (
-	"code-practise/web"
 	"github.com/prometheus/client_golang/prometheus"
+	"go-framework/web"
 	"strconv"
 	"time"
 )

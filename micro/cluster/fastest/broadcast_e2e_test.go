@@ -1,13 +1,13 @@
 package broadcast
 
 import (
-	"code-practise/micro"
-	"code-practise/micro/load_balance/round_robin"
-	"code-practise/micro/registry/memery"
-	"code-practise/micro/rpc/proto/gen"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"go-framework/micro"
+	"go-framework/micro/load_balance/round_robin"
+	"go-framework/micro/registry/memery"
+	"go-framework/micro/rpc/proto/gen"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
