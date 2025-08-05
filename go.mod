@@ -1,4 +1,4 @@
-module code-practise
+module go-framework
 
 go 1.24.2
 
