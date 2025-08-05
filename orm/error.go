@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"go-framework/orm/internal/errs"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/errs"
 )
 
 var ErrNoRows = errs.ErrNoRows

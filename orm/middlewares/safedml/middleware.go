@@ -3,7 +3,7 @@ package nodelete
 import (
 	"context"
 	"errors"
-	"go-framework/orm"
+	"github.com/CoucouMonEcho/go-framework/orm"
 	"strings"
 )
 

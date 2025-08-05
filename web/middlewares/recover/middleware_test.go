@@ -2,8 +2,8 @@ package recover
 
 import (
 	"fmt"
+	"github.com/CoucouMonEcho/go-framework/web"
 	"github.com/stretchr/testify/require"
-	"go-framework/web"
 	"net/http"
 	"testing"
 )

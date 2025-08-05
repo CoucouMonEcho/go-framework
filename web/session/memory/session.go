@@ -3,8 +3,8 @@ package memory
 import (
 	"context"
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/web/session"
 	"github.com/patrickmn/go-cache"
-	"go-framework/web/session"
 	"sync"
 	"time"
 )

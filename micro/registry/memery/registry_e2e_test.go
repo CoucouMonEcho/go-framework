@@ -3,9 +3,9 @@ package memery
 import (
 	"context"
 	"fmt"
+	"github.com/CoucouMonEcho/go-framework/micro"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/proto/gen"
 	"github.com/stretchr/testify/require"
-	"go-framework/micro"
-	"go-framework/micro/rpc/proto/gen"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

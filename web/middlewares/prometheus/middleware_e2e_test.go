@@ -3,8 +3,8 @@
 package prometheus
 
 import (
+	"github.com/CoucouMonEcho/go-framework/web"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go-framework/web"
 	"math/rand"
 	"net/http"
 	"testing"

@@ -3,10 +3,10 @@ package cache
 import (
 	"context"
 	"fmt"
+	"github.com/CoucouMonEcho/go-framework/cache/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-	"go-framework/cache/mocks"
 	"testing"
 	"time"
 )

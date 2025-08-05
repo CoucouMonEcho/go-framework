@@ -2,7 +2,7 @@ package memery
 
 import (
 	"context"
-	"go-framework/micro/registry"
+	"github.com/CoucouMonEcho/go-framework/micro/registry"
 	"sync"
 )
 

@@ -3,10 +3,10 @@ package accessor
 import (
 	"database/sql"
 	"database/sql/driver"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go-framework/orm/model"
 	"testing"
 )
 

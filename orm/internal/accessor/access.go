@@ -2,7 +2,7 @@ package accessor
 
 import (
 	"database/sql"
-	"go-framework/orm/model"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 )
 
 var (

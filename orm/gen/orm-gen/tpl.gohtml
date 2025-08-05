@@ -1,7 +1,7 @@
 package {{ .Package}}
 
 import (
-	"go-framework/orm"{{range $idx, $import := .Imports}}
+	"github.com/CoucouMonEcho/go-framework/orm"{{range $idx, $import := .Imports}}
 	{{$import}}
 {{end -}}
 )

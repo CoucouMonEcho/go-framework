@@ -2,7 +2,7 @@ package rpc
 
 import (
 	"context"
-	"go-framework/micro/rpc/message"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/message"
 )
 
 type Service interface {

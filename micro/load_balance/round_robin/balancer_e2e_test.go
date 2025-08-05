@@ -3,8 +3,8 @@ package round_robin
 import (
 	"context"
 	"fmt"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/proto/gen"
 	"github.com/stretchr/testify/require"
-	"go-framework/micro/rpc/proto/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"

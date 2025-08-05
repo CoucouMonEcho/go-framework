@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"go-framework/simple/shutdown/service"
+	"github.com/CoucouMonEcho/go-framework/simple/shutdown/service"
 	"log"
 	"net/http"
 )

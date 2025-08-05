@@ -6,7 +6,7 @@ package rpc
 
 import (
 	context "context"
-	message "go-framework/micro/rpc/message"
+	message "github.com/CoucouMonEcho/go-framework/micro/rpc/message"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

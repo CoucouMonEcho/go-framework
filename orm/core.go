@@ -2,8 +2,8 @@ package orm
 
 import (
 	"context"
-	"go-framework/orm/internal/accessor"
-	"go-framework/orm/model"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/accessor"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 )
 
 type core struct {

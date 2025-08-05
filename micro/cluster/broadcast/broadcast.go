@@ -2,7 +2,7 @@ package broadcast
 
 import (
 	"context"
-	"go-framework/micro/registry"
+	"github.com/CoucouMonEcho/go-framework/micro/registry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

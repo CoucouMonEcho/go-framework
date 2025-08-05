@@ -2,7 +2,7 @@ package accesslog
 
 import (
 	"fmt"
-	"go-framework/web"
+	"github.com/CoucouMonEcho/go-framework/web"
 	"log"
 	"net/http/httptest"
 	"testing"

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"go-framework/orm/internal/errs"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/errs"
 	"reflect"
 	"regexp"
 	"strings"

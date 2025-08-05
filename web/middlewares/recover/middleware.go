@@ -1,7 +1,7 @@
 package recover
 
 import (
-	"go-framework/web"
+	"github.com/CoucouMonEcho/go-framework/web"
 )
 
 type MiddlewareBuilder struct {

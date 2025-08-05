@@ -3,10 +3,10 @@ package querylog
 import (
 	"context"
 	"database/sql"
+	"github.com/CoucouMonEcho/go-framework/orm"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go-framework/orm"
 	"testing"
 )
 

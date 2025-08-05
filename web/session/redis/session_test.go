@@ -2,9 +2,9 @@ package redis
 
 import (
 	"context"
+	"github.com/CoucouMonEcho/go-framework/cache/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/redis/go-redis/v9"
-	"go-framework/cache/mocks"
 	"testing"
 	"time"
 )

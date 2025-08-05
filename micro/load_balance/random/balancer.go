@@ -1,7 +1,7 @@
 package random
 
 import (
-	"go-framework/micro/route"
+	"github.com/CoucouMonEcho/go-framework/micro/route"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/resolver"

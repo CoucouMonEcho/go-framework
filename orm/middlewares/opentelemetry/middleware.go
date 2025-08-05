@@ -3,13 +3,13 @@ package opentelemetry
 import (
 	"context"
 	"fmt"
-	"go-framework/orm"
+	"github.com/CoucouMonEcho/go-framework/orm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const instrumentationName = "go-framework/orm/middlewares/opentelemetry"
+const instrumentationName = "github.com/CoucouMonEcho/go-framework/orm/middlewares/opentelemetry"
 
 type MiddlewareBuilder struct {
 	Tracer trace.Tracer

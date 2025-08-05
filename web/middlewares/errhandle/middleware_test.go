@@ -2,8 +2,8 @@ package errhandle
 
 import (
 	"bytes"
+	"github.com/CoucouMonEcho/go-framework/web"
 	"github.com/stretchr/testify/require"
-	"go-framework/web"
 	"html/template"
 	"net/http"
 	"testing"

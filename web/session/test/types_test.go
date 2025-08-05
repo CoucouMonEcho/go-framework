@@ -4,11 +4,11 @@
 package test
 
 import (
+	"github.com/CoucouMonEcho/go-framework/web"
+	"github.com/CoucouMonEcho/go-framework/web/session"
+	"github.com/CoucouMonEcho/go-framework/web/session/cookie"
+	"github.com/CoucouMonEcho/go-framework/web/session/memory"
 	"github.com/stretchr/testify/require"
-	"go-framework/web"
-	"go-framework/web/session"
-	"go-framework/web/session/cookie"
-	"go-framework/web/session/memory"
 	"log"
 	"net/http"
 	"testing"

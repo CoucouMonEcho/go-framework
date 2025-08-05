@@ -3,8 +3,8 @@ package gzip
 import (
 	"bytes"
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/compress"
 	"github.com/klauspost/compress/gzip"
-	"go-framework/micro/rpc/compress"
 	"io"
 )
 

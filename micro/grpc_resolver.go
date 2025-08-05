@@ -2,7 +2,7 @@ package micro
 
 import (
 	"context"
-	"go-framework/micro/registry"
+	"github.com/CoucouMonEcho/go-framework/micro/registry"
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 	"time"

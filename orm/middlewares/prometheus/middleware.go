@@ -2,8 +2,8 @@ package prometheus
 
 import (
 	"context"
+	"github.com/CoucouMonEcho/go-framework/orm"
 	"github.com/prometheus/client_golang/prometheus"
-	"go-framework/orm"
 	"time"
 )
 

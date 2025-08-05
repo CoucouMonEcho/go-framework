@@ -3,9 +3,9 @@ package rate_limit
 import (
 	"context"
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/proto/gen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go-framework/micro/rpc/proto/gen"
 	"google.golang.org/grpc"
 	"testing"
 	"time"

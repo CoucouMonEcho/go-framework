@@ -2,9 +2,9 @@ package net
 
 import (
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/micro/net/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"go-framework/micro/net/mocks"
 	"net"
 	"testing"
 )

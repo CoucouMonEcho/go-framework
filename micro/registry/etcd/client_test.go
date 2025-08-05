@@ -2,9 +2,9 @@ package etcd
 
 import (
 	"context"
+	"github.com/CoucouMonEcho/go-framework/micro"
+	"github.com/CoucouMonEcho/go-framework/micro/rpc/proto/gen"
 	"github.com/stretchr/testify/require"
-	"go-framework/micro"
-	"go-framework/micro/rpc/proto/gen"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"testing"
 	"time"

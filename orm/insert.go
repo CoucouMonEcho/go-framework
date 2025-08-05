@@ -3,8 +3,8 @@ package orm
 import (
 	"context"
 	"database/sql"
-	"go-framework/orm/internal/errs"
-	"go-framework/orm/model"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/errs"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 )
 
 type Assignable interface {

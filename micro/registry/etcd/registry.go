@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-framework/micro/registry"
+	"github.com/CoucouMonEcho/go-framework/micro/registry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"sync"

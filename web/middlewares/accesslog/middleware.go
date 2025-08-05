@@ -3,7 +3,7 @@ package accesslog
 import (
 	"encoding/json"
 	"fmt"
-	"go-framework/web"
+	"github.com/CoucouMonEcho/go-framework/web"
 )
 
 type MiddlewareBuilder struct {

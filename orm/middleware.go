@@ -2,7 +2,7 @@ package orm
 
 import (
 	"context"
-	"go-framework/orm/model"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 )
 
 type QueryContext struct {

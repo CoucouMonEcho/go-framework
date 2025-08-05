@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/errs"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go-framework/orm/internal/errs"
 	"testing"
 )
 

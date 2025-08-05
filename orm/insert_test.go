@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"github.com/CoucouMonEcho/go-framework/orm/internal/errs"
+	"github.com/CoucouMonEcho/go-framework/orm/model"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go-framework/orm/internal/errs"
-	"go-framework/orm/model"
 	"testing"
 )
 
@@ -246,6 +246,58 @@ func TestInserter_Exec(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			res := tc.i.Exec(context.Background())
+			affected, err := res.RowsAffected()
+			assert.Equal(t, tc.wantErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tc.affected, affected)
+		})
+	}
+}
+
+func TestUpdater_Exec(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() {
+		if mockDB != nil {
+			err = mockDB.Close()
+		}
+	}()
+	db, err := OpenDB(mockDB)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name     string
+		u        *Updater[TestModel]
+		wantErr  error
+		affected int64
+	}{
+		//{
+		//	name: "db error",
+		//	u: func() *Updater[TestModel] {
+		//		mock.ExpectExec(`UPDATE .*`).
+		//			WillReturnError(errors.New("db error"))
+		//		return NewUpdater[TestModel](db).Set(C("Name"), 123).Where(C("Age").Eq(18))
+		//	}(),
+		//	wantErr: errors.New("db error"),
+		//},
+		{
+			name: "exec",
+			u: func() *Updater[TestModel] {
+				res := driver.RowsAffected(1)
+				//mock.ExpectExec("UPDATE `test_model` SET `id` = ? WHERE `age` = ?; .*").WithArgs(123, 18).
+				mock.ExpectExec("UPDATE `test_model` SET `id` = .*").WithArgs(123, 18).
+					WillReturnResult(res)
+				return NewUpdater[TestModel](db).Set(C("Id"), 123).Where(C("Age").Eq(18))
+			}(),
+			affected: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := tc.u.Exec(context.Background())
 			affected, err := res.RowsAffected()
 			assert.Equal(t, tc.wantErr, err)
 			if err != nil {

@@ -2,7 +2,7 @@ package querylog
 
 import (
 	"context"
-	"go-framework/orm"
+	"github.com/CoucouMonEcho/go-framework/orm"
 	"log"
 	"time"
 )
