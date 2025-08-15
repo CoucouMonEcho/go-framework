@@ -97,6 +97,7 @@ func (u *Updater[T]) Exec(ctx context.Context) Result {
 	if u.model, err = u.r.Get(new(T)); err != nil {
 		return Result{err: err}
 	}
+	u.sb.Reset()
 	res := exec(ctx, u.sess, u.core, &QueryContext{
 		Type:    "UPDATE",
 		Builder: u,

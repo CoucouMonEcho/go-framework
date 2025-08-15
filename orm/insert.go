@@ -171,6 +171,7 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	if i.model, err = i.r.Get(new(T)); err != nil {
 		return Result{err: err}
 	}
+	i.sb.Reset()
 	res := exec(ctx, i.sess, i.core, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,

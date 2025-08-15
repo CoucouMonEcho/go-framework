@@ -241,6 +241,7 @@ func (s *Selector[T]) Get(ctx context.Context) (*T, error) {
 	if s.model, err = s.r.Get(new(T)); err != nil {
 		return nil, err
 	}
+	s.sb.Reset()
 	res := get[T](ctx, s.sess, s.core, &QueryContext{
 		Type:    "SELECT",
 		Builder: s.Limit(1),
@@ -258,6 +259,7 @@ func (s *Selector[T]) GetMulti(ctx context.Context) ([]*T, error) {
 	if s.model, err = s.r.Get(new(T)); err != nil {
 		return nil, err
 	}
+	s.sb.Reset()
 	res := getMulti[T](ctx, s.sess, s.core, &QueryContext{
 		Type:    "SELECT",
 		Builder: s,

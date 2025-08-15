@@ -20,6 +20,7 @@ func (d *Deleter[T]) Exec(ctx context.Context) Result {
 	if d.model, err = d.r.Get(new(T)); err != nil {
 		return Result{err: err}
 	}
+	d.sb.Reset()
 	res := exec(ctx, d.sess, d.core, &QueryContext{
 		Type:    "DELETE",
 		Builder: d,
