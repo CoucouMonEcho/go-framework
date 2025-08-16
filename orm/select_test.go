@@ -217,7 +217,7 @@ func TestSelector_Select(t *testing.T) {
 			name:    "column as",
 			builder: (NewSelector[TestModel](db)).Select(C("FirstName").As("my_name"), Max("Age").As("max"), Min("Age").As("min"), Sum("Age").As("sum")).Where(C("Age").As("aaa").Eq(18).And(C("FirstName").Eq("user1"))),
 			wantQuery: &Query{
-				SQL:  "SELECT `first_name` AS `my_name`, MAX(`age`) AS `max` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
+				SQL:  "SELECT `first_name` AS `my_name`, MAX(`age`) AS `max`, MIN(`age`) AS `min`, SUM(`age`) AS `sum` FROM `test_model` WHERE (`age` = ?) AND (`first_name` = ?);",
 				Args: []any{18, "user1"},
 			},
 		},

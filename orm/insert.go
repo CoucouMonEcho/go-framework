@@ -68,6 +68,9 @@ func (i *Inserter[T]) Build() (*Query, error) {
 		}
 	}
 
+	// reset
+	i.reset()
+
 	i.sb.WriteString("INSERT INTO ")
 
 	// table name
@@ -171,7 +174,6 @@ func (i *Inserter[T]) Exec(ctx context.Context) Result {
 	if i.model, err = i.r.Get(new(T)); err != nil {
 		return Result{err: err}
 	}
-	i.sb.Reset()
 	res := exec(ctx, i.sess, i.core, &QueryContext{
 		Type:    "INSERT",
 		Builder: i,

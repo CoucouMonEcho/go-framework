@@ -262,3 +262,10 @@ func (b *builder) addArgs(vals ...any) {
 	b.args = append(b.args, vals...)
 	return
 }
+
+func (b *builder) reset() {
+	b.sb.Reset()
+	if b.args != nil {
+		b.args = b.args[:0]
+	}
+}
