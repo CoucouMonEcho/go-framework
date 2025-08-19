@@ -82,7 +82,7 @@ func getMultiHandler[T any](ctx context.Context, sess Session, c core, qc *Query
 		}
 	}()
 
-	tps := make([]*T, 16)
+	tps := make([]*T, 0, 16)
 	for rows.Next() {
 		tp := new(T)
 		acc := c.creator(qc.Model, tp)
